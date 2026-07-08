@@ -86,6 +86,12 @@ const UploadIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
   </svg>
 );
+// New: icon for "Skip" sub-category mode
+const SkipIcon = () => (
+  <svg className="h-3.5 w-3.5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798l-5.445-3.63z" clipRule="evenodd" />
+  </svg>
+);
 
 // ─── GET CATEGORY DISPLAY NAME ────────────────────────────────
 const getCatName = (cat) => {
@@ -256,7 +262,14 @@ const ColorPicker = ({ selected, onSelect }) => {
 const StepBreadcrumb = ({ mainCat, subCat, activeStep }) => {
   const steps = [
     { id: 1, label: 'Main Category', value: mainCat ? getCatName(mainCat) : null, emoji: '📁' },
-    { id: 2, label: 'Sub-Category',  value: subCat  ? (subCat.isNew ? `New: "${subCat.name}"` : getCatName(subCat)) : null, emoji: '📂' },
+    {
+      id: 2,
+      label: 'Sub-Category',
+      value: subCat
+        ? (subCat.direct ? 'No Sub-folder' : subCat.isNew ? `New: "${subCat.name}"` : getCatName(subCat))
+        : null,
+      emoji: '📂'
+    },
     { id: 3, label: 'Item Details',  value: null, emoji: '🏷️' },
   ];
   return (
@@ -297,7 +310,10 @@ const AddForm = ({ onDone, onCancel }) => {
   // Step 2
   const [subCategories, setSubCategories] = useState([]);
   const [subCatLoading, setSubCatLoading] = useState(false);
-  const [subCatMode, setSubCatMode] = useState('existing');
+  // 'existing' -> pick a subcategory that already exists
+  // 'new'      -> create a brand-new subcategory
+  // 'skip'     -> NO subcategory at all — item attaches directly to the main category
+  const [subCatMode, setSubCatMode] = useState('skip');
   const [selectedSub, setSelectedSub] = useState(null);
   const [newSubName, setNewSubName] = useState('');
   const [newSubLang, setNewSubLang] = useState('en');
@@ -318,10 +334,19 @@ const AddForm = ({ onDone, onCancel }) => {
   const parentBuddyMode = selectedMain?.buddy_mode ?? false;
   const parentBuddyLocked = selectedMain !== null;
   const subEffectiveBuddyMode = parentBuddyLocked ? parentBuddyMode : newSubBuddyMode;
+
+  // When skipping the sub-category step entirely, the item inherits straight
+  // from the main category — there's no intermediate layer to lock against.
   const subParentBuddyMode = subCatMode === 'existing'
     ? (selectedSub?.buddy_mode ?? false)
-    : subEffectiveBuddyMode;
-  const subParentLocked = subCatMode === 'existing' ? selectedSub !== null : parentBuddyLocked;
+    : subCatMode === 'skip'
+      ? parentBuddyMode
+      : subEffectiveBuddyMode;
+  const subParentLocked = subCatMode === 'existing'
+    ? selectedSub !== null
+    : subCatMode === 'skip'
+      ? parentBuddyLocked
+      : parentBuddyLocked;
   const itemEffectiveBuddyMode = subParentLocked ? subParentBuddyMode : buddyMode;
 
   const handleAudioChange = (e) => {
@@ -348,7 +373,10 @@ const AddForm = ({ onDone, onCancel }) => {
     getSubCategoriesByParent(selectedMain.id).then(res => {
       if (res.success) {
         setSubCategories(res.data);
-        setSubCatMode(res.data.length > 0 ? 'existing' : 'new');
+        // Default: if sub-categories already exist, show them.
+        // If none exist, don't force creating one — default to "skip"
+        // so buttons can be added straight under the main category.
+        setSubCatMode(res.data.length > 0 ? 'existing' : 'skip');
         if (res.data.length > 0) setSelectedSub(res.data[0]);
       }
       setSubCatLoading(false);
@@ -373,6 +401,7 @@ const AddForm = ({ onDone, onCancel }) => {
   const goToStep3 = () => {
     if (subCatMode === 'existing' && !selectedSub) { toast.error('Please select a sub-category'); return; }
     if (subCatMode === 'new' && !newSubName.trim()) { toast.error('Enter a sub-category name'); return; }
+    // 'skip' needs no validation — nothing to pick or create
     setStep(3);
   };
 
@@ -383,6 +412,14 @@ const AddForm = ({ onDone, onCancel }) => {
     setSubmitting(true);
 
     let subCategoryId;
+    // NOTE: when subCatMode === 'skip' we pass the MAIN category's id
+    // straight through as the item's parent id (isDirectToCategory = true).
+    // createItem()/the backend needs to accept a main-category id here
+    // instead of requiring a row in the sub_categories table — if your
+    // API only accepts a sub_category_id today, this flag tells it to
+    // treat the id as a category id instead. Update categoryItemsApiClient.js
+    // + the backend endpoint to honor this flag if it doesn't already.
+    let isDirectToCategory = false;
 
     if (subCatMode === 'new') {
       toast.loading('Creating sub-category...', { id: 'save' });
@@ -392,6 +429,9 @@ const AddForm = ({ onDone, onCancel }) => {
       if (!res.success) { toast.error(res.message, { id: 'save' }); setSubmitting(false); return; }
       subCategoryId = res.data?.id;
       if (!subCategoryId) { toast.error('Could not get sub-category ID', { id: 'save' }); setSubmitting(false); return; }
+    } else if (subCatMode === 'skip') {
+      subCategoryId = selectedMain.id;
+      isDirectToCategory = true;
     } else {
       subCategoryId = selectedSub.id;
     }
@@ -399,7 +439,7 @@ const AddForm = ({ onDone, onCancel }) => {
     toast.loading('Creating item...', { id: 'save' });
     // audioFile can be null — backend accepts it, app will use TTS
     const itemRes = await createItem(
-      subCategoryId, word.trim(), '', color.value, imageFile, audioFile, true, lang, itemEffectiveBuddyMode
+      subCategoryId, word.trim(), '', color.value, imageFile, audioFile, true, lang, itemEffectiveBuddyMode, isDirectToCategory
     );
     if (!itemRes.success) { toast.error(itemRes.message, { id: 'save' }); setSubmitting(false); return; }
 
@@ -409,8 +449,23 @@ const AddForm = ({ onDone, onCancel }) => {
   };
 
   const subCatForCrumb = step >= 3
-    ? (subCatMode === 'new' ? { name: newSubName, isNew: true } : selectedSub)
+    ? (subCatMode === 'new'
+        ? { name: newSubName, isNew: true }
+        : subCatMode === 'skip'
+          ? { direct: true }
+          : selectedSub)
     : null;
+
+  // Only show "Use Existing" as an option when sub-categories actually exist
+  const subCatModeOptions = subCategories.length > 0
+    ? ['existing', 'new', 'skip']
+    : ['new', 'skip'];
+
+  const subCatModeMeta = {
+    existing: { label: '📂 Use Existing' },
+    new:      { label: '✨ Create New' },
+    skip:     { label: (<><SkipIcon />Skip — No Sub-Folder</>) },
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
@@ -448,22 +503,25 @@ const AddForm = ({ onDone, onCancel }) => {
         <div>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Sub-Category</h2>
           <p className="text-sm text-gray-400 mb-6">
-            Pick an existing one under <span className="font-semibold text-gray-700">{getCatName(selectedMain)}</span> or create a new one.
+            Optional — pick an existing one under <span className="font-semibold text-gray-700">{getCatName(selectedMain)}</span>, create a new one, or skip it entirely.
           </p>
-          <div className="flex gap-2 mb-4">
-            {['existing', 'new'].map(m => (
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {subCatModeOptions.map(m => (
               <button key={m} type="button" onClick={() => setSubCatMode(m)}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold border uppercase tracking-wide transition-all ${
                   subCatMode === m ? 'bg-amber-400 border-amber-400 text-gray-900' : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300'
                 }`}>
-                {m === 'existing' ? '📂 Use Existing' : '✨ Create New'}
+                {subCatModeMeta[m].label}
               </button>
             ))}
           </div>
-          {subCatMode === 'existing' ? (
+
+          {subCatMode === 'existing' && (
             <SmartDropdown value={selectedSub} options={subCategories} onSelect={setSelectedSub}
               placeholder="Select sub-category..." loading={subCatLoading} renderName={getCatName} />
-          ) : (
+          )}
+
+          {subCatMode === 'new' && (
             <div className="space-y-4">
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">New Sub-Category Name</p>
@@ -476,9 +534,24 @@ const AddForm = ({ onDone, onCancel }) => {
                 lockedReason={parentBuddyMode ? "Parent has Buddy Mode ON" : "Parent has Buddy Mode OFF"} />
             </div>
           )}
+
+          {subCatMode === 'skip' && (
+            <div className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+              <span className="text-xl leading-none">⏭️</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-700">No sub-folder for this item</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  The button will show up directly under <span className="font-semibold text-gray-600">{getCatName(selectedMain)}</span> when a user opens that category — no extra folder in between.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 mt-8">
             <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">← Back</button>
-            <button type="button" onClick={goToStep3} className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 rounded-xl text-sm font-bold text-gray-900 transition-colors">Next →</button>
+            <button type="button" onClick={goToStep3} className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 rounded-xl text-sm font-bold text-gray-900 transition-colors">
+              {subCatMode === 'skip' ? 'Skip →' : 'Next →'}
+            </button>
           </div>
         </div>
       )}
@@ -545,7 +618,7 @@ const AddForm = ({ onDone, onCancel }) => {
             <ColorPicker selected={color} onSelect={setColor} />
 
             <BuddyModeToggle value={itemEffectiveBuddyMode} onChange={setBuddyMode} locked={subParentLocked}
-              lockedReason={subParentBuddyMode ? "Sub-category has Buddy Mode ON" : "Sub-category has Buddy Mode OFF"} />
+              lockedReason={subParentBuddyMode ? "Parent has Buddy Mode ON" : "Parent has Buddy Mode OFF"} />
 
             {/* Image */}
             <div>
@@ -626,14 +699,17 @@ const EditForm = ({ item, onDone, onCancel }) => {
     onDone();
   };
 
+  // Hide the "Sub" crumb entirely for items that live directly under a main category
+  const crumbSteps = [
+    { emoji: '📁', label: item.mainCategoryName || 'Main' },
+    ...(item.subCategoryName ? [{ emoji: '📂', label: item.subCategoryName }] : []),
+    { emoji: '✏️', label: `Editing: ${existingWord}` },
+  ];
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
       <div className="flex items-center gap-1.5 flex-wrap mb-8">
-        {[
-          { emoji: '📁', label: item.mainCategoryName || 'Main' },
-          { emoji: '📂', label: item.subCategoryName || 'Sub' },
-          { emoji: '✏️', label: `Editing: ${existingWord}` },
-        ].map((t, i, arr) => (
+        {crumbSteps.map((t, i, arr) => (
           <React.Fragment key={i}>
             <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${i === arr.length - 1 ? 'bg-amber-400 border-amber-400 text-gray-900' : 'bg-gray-900 border-gray-900 text-white'}`}>
               {t.emoji} {t.label}
@@ -719,7 +795,7 @@ const EditForm = ({ item, onDone, onCancel }) => {
         <ColorPicker selected={color} onSelect={setColor} />
 
         <BuddyModeToggle value={effectiveBuddyMode} onChange={setBuddyMode} locked={parentBuddyLocked}
-          lockedReason="Sub-category has Buddy Mode ON — item must also be ON" />
+          lockedReason="Parent has Buddy Mode ON — item must also be ON" />
 
         {/* Image */}
         <div>
@@ -883,10 +959,14 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 flex-wrap">
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">{item.mainCategoryName || '—'}</span>
-                        <svg className="h-2.5 w-2.5 text-gray-300 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded-full font-semibold border border-amber-100">{item.subCategoryName || '—'}</span>
+                        {item.subCategoryName && (
+                          <>
+                            <svg className="h-2.5 w-2.5 text-gray-300 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded-full font-semibold border border-amber-100">{item.subCategoryName}</span>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">{fmt.formattedWord}</td>
@@ -970,7 +1050,8 @@ export default function SubCategoryManagement() {
       )
     );
 
-    const itemResults = await Promise.all(
+    // Items nested under real sub-categories
+    const subItemResults = await Promise.all(
       subResults.flatMap(r =>
         r.subs.map(sc =>
           getItemsBySubCategory(sc.id).then(ir => ({
@@ -984,6 +1065,33 @@ export default function SubCategoryManagement() {
         )
       )
     );
+
+    // NOTE: Items added via "Skip — No Sub-Folder" attach directly to the main
+    // category id. getItemsBySubCategory needs to accept a main-category id
+    // too (or you need a separate getItemsByCategory endpoint) for these to
+    // show up here. Update the API client/backend if this call doesn't
+    // return direct items yet.
+    const directItemResults = await Promise.all(
+      mainRes.data.map(mc =>
+        getItemsBySubCategory(mc.id).then(ir => ({
+          mainCategoryId: mc.id,
+          mainCategoryName: getCatName(mc),
+          subCategoryId: null,
+          subCategoryName: null,
+          subCategoryBuddyMode: mc.buddy_mode || false,
+          items: ir.success ? ir.data : []
+        })).catch(() => ({
+          mainCategoryId: mc.id,
+          mainCategoryName: getCatName(mc),
+          subCategoryId: null,
+          subCategoryName: null,
+          subCategoryBuddyMode: mc.buddy_mode || false,
+          items: []
+        }))
+      )
+    );
+
+    const itemResults = [...subItemResults, ...directItemResults];
 
     const flat = itemResults.flatMap(r =>
       r.items.map(item => ({
