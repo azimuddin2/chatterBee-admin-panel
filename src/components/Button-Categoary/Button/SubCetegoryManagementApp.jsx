@@ -45,6 +45,11 @@ const fetchRootCategories = async () => {
 };
 
 // ─── COLORS ──────────────────────────────────────────────────
+// Original 6 presets, PLUS the Mulberry-style AAC symbol color-coding set
+// the client referenced (Yellow=Pronouns, Orange=Nouns, Green=Verbs, etc.)
+// so she can match her Mulberry reference sheet directly from the dropdown.
+// A "Custom Color" picker (hex input) is also available below the presets
+// in ColorPicker, so she is never limited to only this list.
 const COLORS = [
   { name: 'Gold',        value: '#FDD268' },
   { name: 'Cream',       value: '#FFF8E6' },
@@ -52,6 +57,15 @@ const COLORS = [
   { name: 'Powder Blue', value: '#DDF2F5' },
   { name: 'Lavender',    value: '#E8E8F6' },
   { name: 'Mint Green',  value: '#E7F5E3' },
+  { name: 'Yellow — Pronouns',        value: '#FDDEA8' },
+  { name: 'Orange — Nouns',           value: '#FBBF8A' },
+  { name: 'Green — Verbs',            value: '#A8D8A8' },
+  { name: 'Blue — Descriptive',       value: '#A8C8E8' },
+  { name: 'Purple — Questions',       value: '#C9B8E8' },
+  { name: 'Pink — Feelings',          value: '#F5B8C8' },
+  { name: 'Red — Negation',           value: '#F4A8A8' },
+  { name: 'Beige — Prepositions',     value: '#F8E0B8' },
+  { name: 'Gray — Alphabet/Number',   value: '#E8E6E0' },
 ];
 
 // ─── ICONS ───────────────────────────────────────────────────
@@ -216,14 +230,34 @@ const SmartDropdown = ({ label, value, options, onSelect, placeholder, loading: 
 };
 
 // ─── COLOR PICKER ─────────────────────────────────────────────
+// Presets + a "Custom Color" section (native color swatch + hex input)
+// so the client isn't limited to the 6 fixed colors anymore.
+const isValidHex = (hex) => /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test((hex || '').trim());
+
 const ColorPicker = ({ selected, onSelect }) => {
   const [open, setOpen] = useState(false);
+  const [customHex, setCustomHex] = useState(selected?.value || '#FDD268');
   const ref = useRef(null);
+
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
+
+  useEffect(() => {
+    if (selected?.value) setCustomHex(selected.value);
+  }, [selected?.value]);
+
+  const applyCustom = () => {
+    if (!isValidHex(customHex)) return;
+    const hex = customHex.startsWith('#') ? customHex : `#${customHex}`;
+    onSelect({ name: 'Custom', value: hex.toUpperCase() });
+    setOpen(false);
+  };
+
+  const isPreset = COLORS.some(c => c.value === selected?.value);
+
   return (
     <div className="relative" ref={ref}>
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Color *</p>
@@ -232,26 +266,64 @@ const ColorPicker = ({ selected, onSelect }) => {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm hover:border-amber-300 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
           <span className="h-5 w-5 rounded-full border border-gray-200 shadow-sm flex-shrink-0" style={{ backgroundColor: selected?.value }} />
-          <span className="text-gray-800 font-medium">{selected?.name || 'Pick a color'}</span>
+          <span className="text-gray-800 font-medium truncate">{selected?.name || 'Pick a color'}</span>
+          {selected?.value && !isPreset && (
+            <span className="text-xs text-gray-400 font-mono flex-shrink-0">{selected.value}</span>
+          )}
         </div>
         <ChevronDown />
       </button>
       {open && (
         <div className="absolute z-40 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
-          {COLORS.map(c => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => { onSelect(c); setOpen(false); }}
-              className={`w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-amber-50 transition-colors ${selected?.value === c.value ? 'bg-amber-50' : ''}`}
-            >
-              <span className="h-5 w-5 rounded-full border border-gray-200 shadow-sm flex-shrink-0" style={{ backgroundColor: c.value }} />
-              <span className={`text-sm ${selected?.value === c.value ? 'font-semibold text-amber-700' : 'text-gray-700'}`}>{c.name}</span>
-              {selected?.value === c.value && <CheckIcon />}
-            </button>
-          ))}
+          <div className="max-h-64 overflow-y-auto">
+            {COLORS.map(c => (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => { onSelect(c); setOpen(false); }}
+                className={`w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-amber-50 transition-colors ${selected?.value === c.value ? 'bg-amber-50' : ''}`}
+              >
+                <span className="h-5 w-5 rounded-full border border-gray-200 shadow-sm flex-shrink-0" style={{ backgroundColor: c.value }} />
+                <span className={`text-sm ${selected?.value === c.value ? 'font-semibold text-amber-700' : 'text-gray-700'}`}>{c.name}</span>
+                {selected?.value === c.value && <CheckIcon />}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom color — hex input + native swatch picker */}
+          <div className="border-t border-gray-100 p-3 bg-gray-50">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Custom Color</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={isValidHex(customHex) ? customHex : '#FDD268'}
+                onChange={(e) => setCustomHex(e.target.value)}
+                className="h-9 w-9 rounded-lg border border-gray-200 cursor-pointer flex-shrink-0 p-0 bg-white"
+                title="Pick any color"
+              />
+              <input
+                type="text"
+                value={customHex}
+                onChange={(e) => setCustomHex(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCustom(); } }}
+                placeholder="#RRGGBB"
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 font-mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
+              />
+              <button
+                type="button"
+                onClick={applyCustom}
+                disabled={!isValidHex(customHex)}
+                className="px-3 py-2 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-gray-900 transition-colors flex-shrink-0"
+              >
+                Use
+              </button>
+            </div>
+            {!isValidHex(customHex) && customHex && (
+              <p className="text-xs text-red-400 mt-1.5">Enter a valid hex code, e.g. #A8D8A8</p>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -666,7 +738,13 @@ const EditForm = ({ item, onDone, onCancel }) => {
 
   const [word, setWord] = useState(existingWord);
   const [lang, setLang] = useState(existingLang);
-  const [color, setColor] = useState(COLORS.find(c => c.value === item?.color) || COLORS[0]);
+  // If the item's stored color isn't one of the presets (e.g. a custom hex
+  // picked earlier), keep it as a "Custom" entry instead of silently
+  // resetting to the first preset.
+  const [color, setColor] = useState(
+    COLORS.find(c => c.value === item?.color) ||
+    (item?.color ? { name: 'Custom', value: item.color } : COLORS[0])
+  );
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(item?.image_icon || '');
   const [audioFile, setAudioFile] = useState(null);
