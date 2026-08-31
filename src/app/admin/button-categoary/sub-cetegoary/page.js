@@ -1,11 +1,9 @@
-
-import SubCetegoryManagementApp from '@/components/Button-Categoary/Button/SubCetegoryManagementApp'
-import React from 'react'
+import SubCategoryManagement from './_components'
 
 const page = () => {
   return (
     <div>
-       <SubCetegoryManagementApp/>
+       <SubCategoryManagement/>
     </div>
   )
 }

@@ -20,7 +20,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased  hero-section`}
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} antialiased hero-section`}
       >
         {children}
       </body>

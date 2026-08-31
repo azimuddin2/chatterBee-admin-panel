@@ -13,21 +13,70 @@ const getToken = () => {
   return tokenCookie ? tokenCookie.substring(6) : null;
 };
 
-export const getAllRootCategories = async (lang = "en") => {
+export const getAllRootCategories = async ({
+  lang = "en",
+  page = 1,
+  page_size = 10,
+} = {}) => {
   const token = getToken();
-  if (!token) throw new Error("No authentication token found");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
 
   try {
-    const url = `${API_ENDPOINTS.CATEGORIES.GET_ALL_ROOT_CATEGORIES}?lang=${lang}`;
+    const url =
+      `${API_ENDPOINTS.CATEGORIES.GET_ALL_ROOT_CATEGORIES}` +
+      `?lang=${encodeURIComponent(lang)}` +
+      `&page=${page}` +
+      `&page_size=${page_size}`;
+
+    console.log("CATEGORY URL:", url);
+
     const response = await fetch(url, {
       method: "GET",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to fetch categories");
-    return { success: true, data: data.data || [], message: data.message || "Categories fetched successfully" };
+
+    const result = await response.json();
+
+    console.log("CATEGORY API RESULT:", result);
+    console.log("CATEGORY ARRAY:", result?.data?.categories);
+
+    if (!response.ok) {
+      throw new Error(
+        result?.message || "Failed to fetch categories"
+      );
+    }
+
+    return {
+      success: true,
+      data: result?.data?.categories || [],
+      pagination: {
+        totalCount: result?.data?.total_count || 0,
+        totalPages: result?.data?.total_pages || 0,
+        currentPage: result?.data?.page || page,
+        pageSize: result?.data?.page_size || page_size,
+      },
+      message: result?.message || "Categories fetched successfully",
+    };
   } catch (error) {
-    return { success: false, data: [], message: error.message || "Failed to fetch categories" };
+    console.error("CATEGORY ERROR:", error);
+
+    return {
+      success: false,
+      data: [],
+      pagination: {
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: page,
+        pageSize: page_size,
+      },
+      message: error?.message || "Failed to fetch categories",
+    };
   }
 };
 

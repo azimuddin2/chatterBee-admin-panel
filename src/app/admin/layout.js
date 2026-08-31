@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 
 export default function RootLayout({ children }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
     // State to control whether NotificationPage is shown
   const [showNotifications, setShowNotifications] = useState(false);
