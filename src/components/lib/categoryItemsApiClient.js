@@ -24,6 +24,68 @@ const parseResponseSafely = async (response) => {
   }
 };
 
+/**
+ * Fetch ONE page of items (across all sub-categories, flat list), using the
+ * global paginated endpoint:
+ *   GET https://api.chatterbeeapp.com/api/dashboard/admin/items/
+ * Response shape: { data: { total_count, total_pages, page, page_size, items: [...] } }
+ *
+ * Matches the same shape/usage as getAllRootCategories({ page, page_size }):
+ * returns { success, data: items[], pagination: { totalCount, totalPages, currentPage, pageSize }, message }
+ */
+export const getAllItems = async ({ page = 1, page_size = 10 } = {}) => {
+  const token = getToken();
+  if (!token) {
+    return {
+      success: false,
+      data: [],
+      pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize: page_size },
+      message: "No authentication token found.",
+      isAuthError: true,
+    };
+  }
+
+  try {
+    const url = `${API_ENDPOINTS.CATEGORY_ITEMS.GET_ALL}?page=${page}&page_size=${page_size}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
+    });
+    const result = await parseResponseSafely(response);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        data: [],
+        pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize: page_size },
+        message: result.message || `Failed to fetch items (${response.status})`,
+        statusCode: response.status,
+      };
+    }
+
+    const payload = result.data || {};
+    return {
+      success: true,
+      data: payload.items || [],
+      pagination: {
+        totalCount: payload.total_count || 0,
+        totalPages: payload.total_pages || 0,
+        currentPage: payload.page || page,
+        pageSize: payload.page_size || page_size,
+      },
+      message: result.message || "Items fetched successfully",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize: page_size },
+      message: `Network error: ${error.message}`,
+      isNetworkError: true,
+    };
+  }
+};
+
 export const getItemsBySubCategory = async (subCategoryId) => {
   const token = getToken();
   if (!token) return { success: false, data: [], message: "No authentication token found.", isAuthError: true };
@@ -60,18 +122,6 @@ export const getSingleItem = async (itemId) => {
   }
 };
 
-/**
- * Create new item/button
- * @param {number} subCategoryId
- * @param {string} word
- * @param {string} speakAs
- * @param {string} color
- * @param {File} imageFile
- * @param {File|null} audioFile - OPTIONAL: if null, app will use device TTS
- * @param {boolean} isActive
- * @param {string} lang - "en" | "es"
- * @param {boolean} buddyMode
- */
 export const createItem = async (
   subCategoryId,
   word,
@@ -101,7 +151,6 @@ export const createItem = async (
       if (imageFile.size > 5 * 1024 * 1024) return { success: false, data: null, message: "Image file size must be less than 5MB" };
       formData.append("image_icon", imageFile);
     }
-    // Audio is OPTIONAL — if not provided, app uses device TTS with the word label
     if (audioFile) {
       if (audioFile.size > 10 * 1024 * 1024) return { success: false, data: null, message: "Audio file size must be less than 10MB" };
       formData.append("speak", audioFile);
@@ -120,18 +169,6 @@ export const createItem = async (
   }
 };
 
-/**
- * Update existing item/button
- * @param {number} itemId
- * @param {string} word
- * @param {string} speakAs
- * @param {string} color
- * @param {File} imageFile
- * @param {File|null} audioFile - OPTIONAL: if null, app will use device TTS
- * @param {boolean} isActive
- * @param {string} lang - "en" | "es"
- * @param {boolean} buddyMode
- */
 export const updateItem = async (
   itemId,
   word,
@@ -161,7 +198,6 @@ export const updateItem = async (
       if (imageFile.size > 5 * 1024 * 1024) return { success: false, data: null, message: "Image file size must be less than 5MB" };
       formData.append("image_icon", imageFile);
     }
-    // Audio is OPTIONAL — if not provided, app uses device TTS with the word label
     if (audioFile) {
       if (audioFile.size > 10 * 1024 * 1024) return { success: false, data: null, message: "Audio file size must be less than 10MB" };
       formData.append("speak", audioFile);
@@ -242,14 +278,13 @@ export const formatItem = (item, lang = "en") => {
     hasImage: !!item.image_icon,
     hasAudio: !!audioUrl,
     audioUrl,
-    // If no custom audio, device TTS will be used
     speakText: audioUrl ? "Custom audio" : "TTS (device)",
     buddyMode: item.buddy_mode || false,
   };
 };
 
 export const categoryItemsApiClient = {
-  getItemsBySubCategory, getSingleItem, createItem, updateItem,
+  getAllItems, getItemsBySubCategory, getSingleItem, createItem, updateItem,
   deleteItem, searchItems, sortItems, getItemsSummary, formatItem
 };
 

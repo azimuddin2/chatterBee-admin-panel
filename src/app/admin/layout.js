@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const [isOpen, setIsOpen] = useState(true);
 
-    // State to control whether NotificationPage is shown
+  // State to control whether NotificationPage is shown
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Function to toggle notification page visibility
@@ -41,29 +41,29 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <div className="flex  text-white min-h-screen">
           <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
 
           <main
-            className={`transition-all duration-300 ease-in-out flex-1 flex flex-col ${
-              isOpen ? 'ml-64' : 'ml-0'
-            }`}
+            className={`transition-all duration-300 ease-in-out flex-1 flex flex-col ${isOpen ? 'ml-64' : 'ml-0'
+              }`}
           >
-         {/* Topbar always visible */}
-      <Topbar onBellClick={handleBellClick} />
+            {/* Topbar always visible */}
+            <Topbar onBellClick={handleBellClick} />
 
-      
 
-      {/* Conditionally render NotificationPage or MainContent */}
-      {showNotifications ? (
-        <div className='p-6'>
-          <NotificationPage onBackClick={handleGoBack} />
-        </div> // Pass handler to NotificationPage
-      ) : (
-        <div className="p-4">{children}</div>
-      )}
-            
+
+            {/* Conditionally render NotificationPage or MainContent */}
+            {showNotifications ? (
+              <div className='p-6'>
+                <NotificationPage onBackClick={handleGoBack} />
+              </div> // Pass handler to NotificationPage
+            ) : (
+              <div className="p-4">{children}</div>
+            )}
+
           </main>
         </div>
       </body>

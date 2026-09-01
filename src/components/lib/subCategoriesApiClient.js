@@ -24,6 +24,68 @@ const parseResponseSafely = async (response) => {
   }
 };
 
+/**
+ * Fetch ONE page of sub-categories (across all main categories, flat list),
+ * using the global paginated endpoint:
+ *   GET https://api.chatterbeeapp.com/api/dashboard/admin/subcategories
+ * Response shape: { data: { total_count, total_pages, page, page_size, sub_categories: [...] } }
+ *
+ * Matches the same shape/usage as getAllRootCategories({ page, page_size }):
+ * returns { success, data: subCategories[], pagination: { totalCount, totalPages, currentPage, pageSize }, message }
+ */
+export const getAllSubCategories = async ({ page = 1, page_size = 10 } = {}) => {
+  const token = getToken();
+  if (!token) {
+    return {
+      success: false,
+      data: [],
+      pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize: page_size },
+      message: "No authentication token found.",
+      isAuthError: true,
+    };
+  }
+
+  try {
+    const url = `${API_ENDPOINTS.SUB_CATEGORIES.GET_ALL}?page=${page}&page_size=${page_size}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
+    });
+    const result = await parseResponseSafely(response);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        data: [],
+        pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize: page_size },
+        message: result.message || `Failed to fetch sub-categories (${response.status})`,
+        statusCode: response.status,
+      };
+    }
+
+    const payload = result.data || {};
+    return {
+      success: true,
+      data: payload.sub_categories || [],
+      pagination: {
+        totalCount: payload.total_count || 0,
+        totalPages: payload.total_pages || 0,
+        currentPage: payload.page || page,
+        pageSize: payload.page_size || page_size,
+      },
+      message: result.message || "Sub-categories fetched successfully",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize: page_size },
+      message: `Network error: ${error.message}`,
+      isNetworkError: true,
+    };
+  }
+};
+
 export const getSubCategoriesByParent = async (categoryId) => {
   const token = getToken();
   if (!token) return { success: false, data: [], message: "No authentication token found.", isAuthError: true };
@@ -60,17 +122,6 @@ export const getSingleSubCategory = async (subCategoryId) => {
   }
 };
 
-/**
- * Create new sub-category
- * @param {number} categoryId - Parent category ID
- * @param {string} name
- * @param {string} color
- * @param {File} imageFile
- * @param {File} audioFile
- * @param {boolean} isActive
- * @param {string} lang - "en" | "es"
- * @param {boolean} buddyMode - Must match or exceed parent's buddy_mode
- */
 export const createSubCategory = async (
   categoryId,
   name,
@@ -116,17 +167,6 @@ export const createSubCategory = async (
   }
 };
 
-/**
- * Update existing sub-category
- * @param {number} subCategoryId
- * @param {string} name
- * @param {string} color
- * @param {File} imageFile
- * @param {File} audioFile
- * @param {boolean} isActive
- * @param {string} lang - "en" | "es"
- * @param {boolean} buddyMode
- */
 export const updateSubCategory = async (
   subCategoryId,
   name,
@@ -223,7 +263,7 @@ export const formatSubCategory = (subCategory, lang = "en") => {
 };
 
 export const subCategoriesApiClient = {
-  getSubCategoriesByParent, getSingleSubCategory, createSubCategory,
+  getAllSubCategories, getSubCategoriesByParent, getSingleSubCategory, createSubCategory,
   updateSubCategory, deleteSubCategory, searchSubCategories,
   getSubCategoriesSummary, formatSubCategory
 };

@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  deleteSubCategory,
-  getAllSubCategories,
-} from "@/components/lib/subCategoriesApiClient";
+  deleteItem,
+  getAllItems,
+} from "@/components/lib/categoryItemsApiClient";
 
 import React, {
   useCallback,
@@ -13,15 +13,19 @@ import React, {
 
 import toast, { Toaster } from "react-hot-toast";
 
-import AddSubCategoary from "./AddSubCategory";
-import EditSubCategoary from "./EditSubCategory";
-import SubCategorylist from "./SubCategoryList";
-import { PlusIcon } from "./shared/Icons";
+import AddItem from "./Additem";
+import EditItem from "./Edititem";
+import ItemsList from "./Itemslist";
+import { PlusIcon } from "../../sub-cetegoary/_components/shared/Icons";
 import LoadingPage from "@/app/admin/loading";
 
-export default function SubCategoryManagement() {
-  // Sub-categories received from API (current page only)
-  const [allSubCategories, setAllSubCategories] = useState([]);
+// ─────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────
+
+export default function AllItemsManage() {
+  // Items received from API (current page only)
+  const [allItems, setAllItems] = useState([]);
 
   // Current API page
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,14 +35,14 @@ export default function SubCategoryManagement() {
     totalCount: 0,
     totalPages: 0,
     currentPage: 1,
-    pageSize: 20,
+    pageSize: 200,
   });
 
   // Add / Edit / List
   const [view, setView] = useState("list");
 
-  // Sub-category being edited
-  const [editingSubCategory, setEditingSubCategory] = useState(null);
+  // Item being edited
+  const [editingItem, setEditingItem] = useState(null);
 
   // Loading
   const [loading, setLoading] = useState(true);
@@ -47,10 +51,10 @@ export default function SubCategoryManagement() {
   const [error, setError] = useState("");
 
   // Items per API request
-  const pageSize = 20;
+  const pageSize = 200;
 
   // ─────────────────────────────────────────────
-  // Fetch Sub-Categories
+  // Fetch Items
   // ─────────────────────────────────────────────
 
   const fetchAllData = useCallback(async () => {
@@ -58,16 +62,16 @@ export default function SubCategoryManagement() {
       setLoading(true);
       setError("");
 
-      const response = await getAllSubCategories({
+      const response = await getAllItems({
         page: currentPage,
         page_size: pageSize,
       });
 
       if (!response.success) {
-        throw new Error(response.message || "Failed to load sub-categories");
+        throw new Error(response.message || "Failed to load items");
       }
 
-      setAllSubCategories(response.data || []);
+      setAllItems(response.data || []);
 
       setPagination(
         response.pagination || {
@@ -78,14 +82,18 @@ export default function SubCategoryManagement() {
         }
       );
     } catch (err) {
-      console.error("Fetch sub-categories error:", err);
-      toast.error(err?.message || "Failed to load sub-categories");
-      setAllSubCategories([]);
-      setError(err?.message || "Failed to load sub-categories");
+      console.error("Fetch items error:", err);
+      toast.error(err?.message || "Failed to load items");
+      setAllItems([]);
+      setError(err?.message || "Failed to load items");
     } finally {
       setLoading(false);
     }
   }, [currentPage]);
+
+  // ─────────────────────────────────────────────
+  // Fetch whenever page changes
+  // ─────────────────────────────────────────────
 
   useEffect(() => {
     fetchAllData();
@@ -106,19 +114,20 @@ export default function SubCategoryManagement() {
   // Delete
   // ─────────────────────────────────────────────
 
-  const handleDeleteSubCategory = (subCategoryId, subCategoryName) => {
+  const handleDelete = (itemId, itemWord) => {
     toast((t) => (
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold text-gray-800">Delete <strong>"{subCategoryName}"</strong>?</p>
-        <p className="text-xs text-gray-400">Items inside it may need to be moved first.</p>
+        <p className="text-sm font-semibold text-gray-800">Delete <strong>"{itemWord}"</strong>?</p>
         <div className="flex justify-end gap-2">
           <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold">Cancel</button>
           <button onClick={async () => {
-            const res = await deleteSubCategory(subCategoryId);
+            const res = await deleteItem(itemId);
             toast.dismiss(t.id);
             res.success ? toast.success('Deleted') : toast.error(res.message);
             if (res.success) {
-              if (allSubCategories.length === 1 && currentPage > 1) {
+              // If we deleted the last item on this page (and it's not page 1),
+              // step back a page so we don't land on an empty page.
+              if (allItems.length === 1 && currentPage > 1) {
                 setCurrentPage((p) => p - 1);
               } else {
                 fetchAllData();
@@ -141,18 +150,18 @@ export default function SubCategoryManagement() {
 
   const handleEditDone = () => {
     setView("list");
-    setEditingSubCategory(null);
+    setEditingItem(null);
     fetchAllData();
   };
 
-  const handleEditClick = (sc) => {
-    setEditingSubCategory(sc);
+  const handleEditClick = (item) => {
+    setEditingItem(item);
     setView("edit");
   };
 
   const handleCancel = () => {
     setView("list");
-    setEditingSubCategory(null);
+    setEditingItem(null);
   };
 
   // ─────────────────────────────────────────────
@@ -162,21 +171,21 @@ export default function SubCategoryManagement() {
   const renderContent = () => {
     switch (view) {
       case "add":
-        return <AddSubCategoary onDone={handleAddDone} onCancel={handleCancel} />;
+        return <AddItem onDone={handleAddDone} onCancel={handleCancel} />;
       case "edit":
         return (
-          <EditSubCategoary
-            subCategory={editingSubCategory}
+          <EditItem
+            item={editingItem}
             onDone={handleEditDone}
             onCancel={handleCancel}
           />
         );
       default:
         return (
-          <SubCategorylist
-            subCategories={allSubCategories}
+          <ItemsList
+            items={allItems}
             onEdit={handleEditClick}
-            onDelete={handleDeleteSubCategory}
+            onDelete={handleDelete}
             loading={loading}
             currentPage={currentPage}
             totalPages={pagination.totalPages}
@@ -187,9 +196,13 @@ export default function SubCategoryManagement() {
     }
   };
 
-  if (loading && view === "list" && allSubCategories.length === 0) {
+  if (loading && view === "list" && allItems.length === 0) {
     return <LoadingPage />;
   }
+
+  // ─────────────────────────────────────────────
+  // UI
+  // ─────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 font-sans">
@@ -197,13 +210,13 @@ export default function SubCategoryManagement() {
       <div className="mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Sub-Category Management</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{pagination.totalCount} sub-categories across all categories</p>
+            <h1 className="text-2xl font-bold text-gray-900">Items Management</h1>
+            <p className="text-sm text-gray-400 mt-0.5">{pagination.totalCount} items across all sub-categories</p>
           </div>
           {view === "list" && (
             <button onClick={() => setView("add")}
               className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm">
-              <PlusIcon /> Add Sub-Category
+              <PlusIcon /> Add Item
             </button>
           )}
         </div>

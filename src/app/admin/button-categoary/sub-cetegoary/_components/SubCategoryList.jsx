@@ -1,11 +1,19 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { formatSubCategory, searchSubCategories } from '@/components/lib/subCategoriesApiClient';
-import { Spinner } from './shared/Icons';
-import { SearchIcon } from 'lucide-react';
-// import { Spinner, SearchIcon } from './shared/icons';
+import { Spinner, SearchIcon } from './shared/Icons';
 
-export default function SubCategorylist({ subCategories, onEdit, onDelete, loading, searchQuery, onSearchChange }) {
+export default function SubCategorylist({
+  subCategories,
+  onEdit,
+  onDelete,
+  loading,
+  currentPage = 1,
+  totalPages = 0,
+  totalCount = 0,
+  onPageChange,
+}) {
+  const [searchQuery, setSearchQuery] = useState('');
   const filtered = searchSubCategories(subCategories, searchQuery);
 
   return (
@@ -13,11 +21,11 @@ export default function SubCategorylist({ subCategories, onEdit, onDelete, loadi
       <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100">
         <div>
           <h2 className="text-lg font-bold text-gray-800">All Sub-Categories</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{subCategories.length} total</p>
+          <p className="text-sm text-gray-500 mt-1">Total Sub-Categories: {totalCount}</p>
         </div>
         <div className="flex items-center gap-2 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl w-56">
           <SearchIcon />
-          <input type="text" placeholder="Search..." value={searchQuery} onChange={e => onSearchChange(e.target.value)}
+          <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 w-full" />
         </div>
       </div>
@@ -45,7 +53,7 @@ export default function SubCategorylist({ subCategories, onEdit, onDelete, loadi
                 return (
                   <tr key={sc.id} className="hover:bg-amber-50/30 transition-colors">
                     <td className="px-6 py-4">
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">{sc.mainCategoryName || '—'}</span>
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">{sc.main_category_name || '—'}</span>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">{sc.formattedName}</td>
                     <td className="px-6 py-4 text-center">
@@ -59,17 +67,15 @@ export default function SubCategorylist({ subCategories, onEdit, onDelete, loadi
                     </td>
                     <td className="px-6 py-4 text-center text-xs text-gray-500">{sc.itemsText}</td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        sc.buddyMode ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-400 border border-gray-200'
-                      }`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${sc.buddyMode ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-400 border border-gray-200'
+                        }`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${sc.buddyMode ? 'bg-amber-500' : 'bg-gray-400'}`} />
                         {sc.buddyMode ? 'ON' : 'OFF'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        sc.statusColor === 'green' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${sc.statusColor === 'green' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
                         {sc.statusBadge}
                       </span>
                     </td>
@@ -90,6 +96,52 @@ export default function SubCategorylist({ subCategories, onEdit, onDelete, loadi
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-4">
+          <div className="text-sm text-gray-600">
+            Page <span className="font-semibold">{currentPage}</span> of{" "}
+            <span className="font-semibold">{totalPages}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+              className={`px-4 py-2 text-sm font-semibold rounded-md ${currentPage === 1 || loading
+                ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                : 'text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                disabled={loading}
+                className={`px-4 py-2 text-sm font-semibold rounded-md ${currentPage === page ? 'bg-yellow-400 text-white' : 'text-gray-900 hover:bg-gray-50'
+                  }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+              className={`px-4 py-2 text-sm font-semibold rounded-md ${currentPage === totalPages || loading
+                ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                : 'text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </div>
