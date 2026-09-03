@@ -33,7 +33,7 @@ const parseResponseSafely = async (response) => {
  * Matches the same shape/usage as getAllRootCategories({ page, page_size }):
  * returns { success, data: subCategories[], pagination: { totalCount, totalPages, currentPage, pageSize }, message }
  */
-export const getAllSubCategories = async ({ page = 1, page_size = 10 } = {}) => {
+export const getAllSubCategories = async ({ page = 1, page_size = 5000 } = {}) => {
   const token = getToken();
   if (!token) {
     return {

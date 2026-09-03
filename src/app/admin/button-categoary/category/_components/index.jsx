@@ -11,6 +11,8 @@ import React, {
   useState,
 } from "react";
 
+import toast from "react-hot-toast";
+
 import AddCategory from "./AddCategoary";
 import EditCategory from "./EditCategoary";
 import CategoryList from "./Categorylist";
@@ -40,7 +42,7 @@ const PlusIcon = () => (
 // ─────────────────────────────────────────────
 
 export default function CategoryManagement() {
-  // Categories received from API
+  // Categories received from API (current page only)
   const [categories, setCategories] = useState([]);
 
   // Current API page
@@ -51,15 +53,14 @@ export default function CategoryManagement() {
     totalCount: 0,
     totalPages: 0,
     currentPage: 1,
-    pageSize: 10,
+    pageSize: 20,
   });
 
   // Add / Edit / List
   const [currentView, setCurrentView] = useState("list");
 
   // Category being edited
-  const [editingCategory, setEditingCategory] =
-    useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
 
   // Loading
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,7 @@ export default function CategoryManagement() {
   const [error, setError] = useState("");
 
   // Items per API request
-  const pageSize = 10;
+  const pageSize = 20;
 
   // ─────────────────────────────────────────────
   // Fetch Categories
@@ -85,16 +86,8 @@ export default function CategoryManagement() {
         page_size: pageSize,
       });
 
-      console.log(
-        "Frontend Category Response:",
-        response
-      );
-
       if (!response.success) {
-        throw new Error(
-          response.message ||
-          "Failed to load categories"
-        );
+        throw new Error(response.message || "Failed to load categories");
       }
 
       // API categories array
@@ -109,18 +102,11 @@ export default function CategoryManagement() {
           pageSize,
         }
       );
-    } catch (error) {
-      console.error(
-        "Fetch categories error:",
-        error
-      );
-
+    } catch (err) {
+      console.error("Fetch categories error:", err);
+      toast.error(err?.message || "Failed to load categories");
       setCategories([]);
-
-      setError(
-        error?.message ||
-        "Failed to load categories"
-      );
+      setError(err?.message || "Failed to load categories");
     } finally {
       setLoading(false);
     }
@@ -140,16 +126,8 @@ export default function CategoryManagement() {
 
   const handlePageChange = (page) => {
     if (loading) return;
-
     if (page < 1) return;
-
-    if (
-      pagination.totalPages > 0 &&
-      page > pagination.totalPages
-    ) {
-      return;
-    }
-
+    if (pagination.totalPages > 0 && page > pagination.totalPages) return;
     setCurrentPage(page);
   };
 
@@ -159,72 +137,48 @@ export default function CategoryManagement() {
 
   const handleAddCategory = () => {
     setCurrentView("list");
-
-    // Reload first page
-    setCurrentPage(1);
+    setCurrentPage(1); // reload first page
   };
 
   // ─────────────────────────────────────────────
   // Update Category
   // ─────────────────────────────────────────────
 
-  const handleUpdateCategory = (
-    updatedCategory
-  ) => {
-    setCategories((previousCategories) =>
-      previousCategories.map((category) =>
-        category.id === updatedCategory.id
-          ? updatedCategory
-          : category
-      )
-    );
-
+  const handleUpdateCategory = () => {
     setCurrentView("list");
     setEditingCategory(null);
+    fetchCategories();
   };
 
   // ─────────────────────────────────────────────
   // Delete Category
   // ─────────────────────────────────────────────
 
-  const handleDeleteCategory = async (
-    categoryId,
-    categoryName
-  ) => {
+  const handleDeleteCategory = async (categoryId, categoryName) => {
     const confirmed = window.confirm(
       `Are you sure you want to delete "${categoryName}"?`
     );
-
     if (!confirmed) return;
 
     try {
-      setLoading(true);
-      setError("");
-
-      const response =
-        await deleteCategory(categoryId);
-
+      const response = await deleteCategory(categoryId);
       if (!response.success) {
-        throw new Error(
-          response.message ||
-          "Failed to delete category"
-        );
+        throw new Error(response.message || "Failed to delete category");
       }
 
-      // Refetch current page
-      await fetchCategories();
-    } catch (error) {
-      console.error(
-        "Delete category error:",
-        error
-      );
+      toast.success("Category deleted");
 
-      setError(
-        error?.message ||
-        "Failed to delete category"
-      );
-    } finally {
-      setLoading(false);
+      // If we deleted the last category on this page (and it's not page 1),
+      // step back a page so we don't land on an empty page.
+      if (categories.length === 1 && currentPage > 1) {
+        setCurrentPage((p) => p - 1);
+      } else {
+        await fetchCategories();
+      }
+    } catch (err) {
+      console.error("Delete category error:", err);
+      toast.error(err?.message || "Failed to delete category");
+      setError(err?.message || "Failed to delete category");
     }
   };
 
@@ -264,9 +218,7 @@ export default function CategoryManagement() {
         return (
           <EditCategory
             category={editingCategory}
-            onUpdateCategory={
-              handleUpdateCategory
-            }
+            onUpdateCategory={handleUpdateCategory}
             onCancel={handleCancel}
           />
         );
@@ -279,20 +231,16 @@ export default function CategoryManagement() {
             onDelete={handleDeleteCategory}
             loading={loading}
             currentPage={currentPage}
-            totalPages={
-              pagination.totalPages
-            }
-            totalCount={
-              pagination.totalCount
-            }
+            totalPages={pagination.totalPages}
+            totalCount={pagination.totalCount}
             onPageChange={handlePageChange}
           />
         );
     }
   };
 
-  if(loading){
-    return <LoadingPage/>
+  if (loading && currentView === "list" && categories.length === 0) {
+    return <LoadingPage />;
   }
 
   // ─────────────────────────────────────────────
@@ -313,16 +261,13 @@ export default function CategoryManagement() {
             </h1>
 
             <p className="text-gray-600 mt-1">
-              Create, edit, and manage your
-              categories
+              Create, edit, and manage your categories
             </p>
           </div>
 
           {currentView === "list" && (
             <button
-              onClick={() =>
-                setCurrentView("add")
-              }
+              onClick={() => setCurrentView("add")}
               className="flex items-center justify-center bg-yellow-400 text-gray-800 font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-yellow-500 transition-all duration-300"
             >
               <PlusIcon />
@@ -335,16 +280,13 @@ export default function CategoryManagement() {
         {/* Error */}
         {error && currentView === "list" && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-
             {error}
-
             <button
               onClick={fetchCategories}
               className="ml-4 text-red-700 font-semibold hover:underline"
             >
               Retry
             </button>
-
           </div>
         )}
 
