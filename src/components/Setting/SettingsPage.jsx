@@ -1,196 +1,139 @@
 'use client';
 
-// ============================================
-// FILE: components/SettingsPage.js
-// Purpose: Admin Settings Page
-//          — Privacy Policy, Terms & Conditions, About Us (Jodit editor)
-//          — FAQ  (list / create / edit / delete)
-// API:     lib/settingsApiClient.js  →  lib/api.js
-// ============================================
-
 import React, {
   useState, useEffect, useRef, useMemo, useCallback,
 } from 'react';
 import {
-  ArrowLeftIcon, PlusIcon, TrashIcon,
+  ArrowLeftIcon,
   PencilSquareIcon, CheckIcon, XMarkIcon,
+  ShieldCheckIcon, DocumentTextIcon, InformationCircleIcon,
+  QuestionMarkCircleIcon, EyeIcon, ArrowUturnLeftIcon,
+  CheckCircleIcon, ExclamationCircleIcon, ClockIcon,
 } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
-import { createFaq, deleteFaq, fetchSettingByTab, getAllFaqs, saveSettingByTab, updateFaq } from '../lib/settingsApiClient';
-
-
+import { fetchSettingByTab, saveSettingByTab } from '../lib/settingsApiClient';
+import FaqSection from './Faqsection';
 
 // ── Jodit (SSR-safe) ──────────────────────────────────────────────────────────
 const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'privacy-security', label: 'Privacy Policy'     },
-  { id: 'terms-conditions', label: 'Terms & Conditions' },
-  { id: 'about-us',         label: 'About Us'           },
-  { id: 'faq',              label: 'FAQ'                },
+  {
+    id: 'privacy-security', label: 'Privacy Policy', Icon: ShieldCheckIcon,
+    desc: 'Explain how user data is collected, used and protected.',
+  },
+  {
+    id: 'terms-conditions', label: 'Terms & Conditions', Icon: DocumentTextIcon,
+    desc: 'Rules and conditions users agree to when using the app.',
+  },
+  {
+    id: 'about-us', label: 'About Us', Icon: InformationCircleIcon,
+    desc: 'Tell users who you are and what the app is about.',
+  },
+  {
+    id: 'faq', label: 'FAQ', Icon: QuestionMarkCircleIcon,
+    desc: 'Common questions and answers shown to users.',
+  },
 ];
+
+const formatDate = (iso) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+};
+
+const PREVIEW_CSS = `
+.legal-preview { color:#374151; line-height:1.7; font-size:15px; word-break:break-word; }
+.legal-preview h1 { font-size:1.6rem; font-weight:700; margin:1.2rem 0 .6rem; color:#111827; }
+.legal-preview h2 { font-size:1.35rem; font-weight:700; margin:1.1rem 0 .5rem; color:#111827; }
+.legal-preview h3 { font-size:1.15rem; font-weight:600; margin:1rem 0 .4rem; color:#111827; }
+.legal-preview p  { margin:.7rem 0; }
+.legal-preview ul { list-style:disc; padding-left:1.6rem; margin:.7rem 0; }
+.legal-preview ol { list-style:decimal; padding-left:1.6rem; margin:.7rem 0; }
+.legal-preview a  { color:#2563eb; text-decoration:underline; }
+.legal-preview hr { margin:1.2rem 0; border-color:#e5e7eb; }
+.legal-preview table { border-collapse:collapse; width:100%; margin:1rem 0; }
+.legal-preview td, .legal-preview th { border:1px solid #d1d5db; padding:6px 10px; }
+`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SMALL SUB-COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Spinning loader */
-const Spinner = () => (
-  <div className="flex justify-center items-center py-24">
-    <div className="h-9 w-9 rounded-full border-4 border-[#FDD268] border-t-transparent animate-spin" />
+const EditorSkeleton = () => (
+  <div className="animate-pulse space-y-4 p-6">
+    <div className="h-10 bg-gray-200 rounded-lg" />
+    <div className="h-4 bg-gray-200 rounded w-11/12" />
+    <div className="h-4 bg-gray-200 rounded w-10/12" />
+    <div className="h-4 bg-gray-200 rounded w-9/12" />
+    <div className="h-4 bg-gray-200 rounded w-11/12" />
+    <div className="h-4 bg-gray-200 rounded w-7/12" />
   </div>
 );
 
-/** Auto-dismissing toast */
+/** Inline message banner */
 const Toast = ({ message, type, onClose }) => (
   <div
-    className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3
-      rounded-xl shadow-xl text-white text-sm font-medium animate-fade-in
-      ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}
+    role="status"
+    className={`flex items-center justify-between gap-3 px-4 py-3 mb-4 rounded-lg text-sm font-medium border
+      ${type === 'success'
+        ? 'bg-green-50 text-green-700 border-green-200'
+        : 'bg-red-50 text-red-700 border-red-200'}`}
   >
-    <span>{message}</span>
+    <span className="flex items-center gap-2">
+      {type === 'success'
+        ? <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+        : <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0" />}
+      {message}
+    </span>
     <button
       onClick={onClose}
-      className="ml-1 opacity-80 hover:opacity-100 transition-opacity"
+      aria-label="Dismiss"
+      className="opacity-70 hover:opacity-100 transition-opacity"
     >
       <XMarkIcon className="h-4 w-4" />
     </button>
   </div>
 );
 
-/**
- * Single FAQ row with inline edit.
- * Calls parent handlers so state lives in SettingsPage.
- */
-const FaqRow = ({ faq, onSave, onDelete }) => {
-  const [editing,  setEditing]  = useState(false);
-  const [title,    setTitle]    = useState(faq.title   ?? '');
-  const [content,  setContent]  = useState(faq.content ?? '');
-  const [saving,   setSaving]   = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    await onSave(faq.id, { title, content });
-    setSaving(false);
-    setEditing(false);
-  };
-
-  const handleCancel = () => {
-    setTitle(faq.title   ?? '');
-    setContent(faq.content ?? '');
-    setEditing(false);
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden mb-3 bg-white shadow-sm transition-shadow hover:shadow-md">
-
-      {/* ── Row header ── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-        {editing ? (
-          <input
-            className="flex-1 text-sm font-semibold text-gray-800 bg-white border border-gray-300
-                       rounded-lg px-3 py-1.5 mr-3 focus:outline-none focus:ring-2 focus:ring-[#FDD268]"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Question / Title"
-          />
-        ) : (
-          <p className="text-sm font-semibold text-gray-800 truncate">
-            {faq.title || <span className="text-gray-400 italic">No title</span>}
-          </p>
-        )}
-
-        <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-          {editing ? (
-            <>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-1 text-xs bg-[#FDD268] hover:bg-yellow-300 text-black
-                           font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <CheckIcon className="h-3.5 w-3.5" />
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex items-center gap-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700
-                           font-medium px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <XMarkIcon className="h-3.5 w-3.5" />
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setEditing(true)}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium
-                           px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
-              >
-                <PencilSquareIcon className="h-3.5 w-3.5" />
-                Edit
-              </button>
-              <button
-                onClick={() => onDelete(faq.id)}
-                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium
-                           px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                <TrashIcon className="h-3.5 w-3.5" />
-                Delete
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Row content ── */}
-      {editing ? (
-        <textarea
-          className="w-full text-sm text-gray-700 px-4 py-3 min-h-[100px] resize-y
-                     focus:outline-none focus:ring-2 focus:ring-[#FDD268]"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Answer / Content"
-        />
-      ) : (
-        <div
-          className="px-4 py-3 text-sm text-gray-600 leading-relaxed line-clamp-3"
-          dangerouslySetInnerHTML={{
-            __html: faq.content || '<span class="text-gray-400 italic">No content</span>',
-          }}
-        />
-      )}
-    </div>
-  );
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const SettingsPage = ({ onBackClick }) => {
-  const editorRef = useRef(null);
+  const contentRef = useRef('');   
+  const savedRef = useRef('');    
+  const touchedRef = useRef(false);
+  const toastTimer = useRef(null);
+  const saveRef = useRef(null);  
 
   // ── state ────────────────────────────────────────────────────────────────
-  const [activeTab,       setActiveTab]       = useState('privacy-security');
+  const [activeTab, setActiveTab] = useState('privacy-security');
   const [editableContent, setEditableContent] = useState('');
-  const [faqs,            setFaqs]            = useState([]);
 
-  // new-FAQ form
-  const [newTitle,   setNewTitle]   = useState('');
-  const [newContent, setNewContent] = useState('');
+  // editor UX
+  const [mode, setMode] = useState('edit');         
+  const [isDirty, setIsDirty] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   // UI flags
-  const [loading,    setLoading]    = useState(false);
-  const [saving,     setSaving]     = useState(false);
-  const [addingFaq,  setAddingFaq]  = useState(false);
-  const [toast,      setToast]      = useState(null); // { message, type }
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null); 
+
+  const currentTab = TABS.find((t) => t.id === activeTab);
 
   // ── toast helper ─────────────────────────────────────────────────────────
   const showToast = useCallback((message, type = 'success') => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  }, []);
+
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
   }, []);
 
   // ── load content on tab change ───────────────────────────────────────────
@@ -198,14 +141,20 @@ const SettingsPage = ({ onBackClick }) => {
     let cancelled = false;
 
     const load = async () => {
+      setMode('edit');
+      setIsDirty(false);
+      touchedRef.current = false;
+      if (activeTab === 'faq') return; 
       setLoading(true);
+      contentRef.current = '';
+      setEditableContent('');
       try {
-        if (activeTab === 'faq') {
-          const data = await getAllFaqs();
-          if (!cancelled) setFaqs(Array.isArray(data) ? data : []);
-        } else {
-          const data = await fetchSettingByTab(activeTab);
-          if (!cancelled) setEditableContent(data?.content ?? '');
+        const data = await fetchSettingByTab(activeTab);
+        if (!cancelled) {
+          contentRef.current = data?.content ?? '';
+          savedRef.current = contentRef.current;
+          setEditableContent(contentRef.current);
+          setLastUpdated(data?.updated_at ?? null);
         }
       } catch (err) {
         if (!cancelled) showToast(err.message || 'Failed to load content.', 'error');
@@ -223,24 +172,86 @@ const SettingsPage = ({ onBackClick }) => {
     readonly: false,
     spellcheck: false,
     theme: 'light',
-    toolbarButtonSize: 'large',
-    minHeight: 300,
+    toolbarButtonSize: 'middle',
+    minHeight: 380,
+    placeholder: 'Start writing here…',
+    showXPathInStatusbar: false,
+    showCharsCounter: false,
+    showWordsCounter: true,
+    askBeforePasteHTML: false,
+    defaultActionOnPaste: 'insert_clear_html',
     buttons: [
       'undo', 'redo', '|',
+      'paragraph', '|',
       'bold', 'italic', 'underline', 'strikethrough', '|',
       'ul', 'ol', '|',
-      'link', '|',
       'align', '|',
-      'cut', 'copy', 'paste', '|',
+      'link', 'table', 'hr', '|',
+      'eraser', 'fullsize', '|',
       'source',
     ],
   }), []);
 
+  // ── editor handlers ──────────────────────────────────────────────────────
+  const handleEditorChange = (val) => {
+    contentRef.current = val;
+    if (!touchedRef.current) {
+      savedRef.current = val;
+      return;
+    }
+    const dirty = val !== savedRef.current;
+    setIsDirty((prev) => (prev === dirty ? prev : dirty));
+  };
+
+  const handleEditorBlur = (val) => {
+    contentRef.current = val;
+    setEditableContent(val);
+  };
+
+  const markTouched = () => { touchedRef.current = true; };
+
+  // ── tab change (unsaved changes guard) ───────────────────────────────────
+  const handleTabChange = (id) => {
+    if (id === activeTab) return;
+    if (isDirty && activeTab !== 'faq') {
+      const ok = window.confirm('You have unsaved changes. Discard them and switch tab?');
+      if (!ok) return;
+    }
+    setActiveTab(id);
+  };
+
+  // ── edit / preview toggle ────────────────────────────────────────────────
+  const switchMode = (next) => {
+    if (next === mode) return;
+    setEditableContent(contentRef.current);
+    setMode(next);
+  };
+
+  // ── discard changes ──────────────────────────────────────────────────────
+  const handleDiscard = () => {
+    if (!window.confirm('Discard all unsaved changes?')) return;
+    contentRef.current = savedRef.current;
+    setEditableContent(savedRef.current);
+    touchedRef.current = false;
+    setIsDirty(false);
+    setEditorKey((k) => k + 1);
+  };
+
   // ── save rich-text setting ───────────────────────────────────────────────
   const handleSaveSetting = async () => {
+    if (saving) return;
     setSaving(true);
     try {
-      await saveSettingByTab(activeTab, editableContent);
+      const html = contentRef.current;
+      await saveSettingByTab(activeTab, html);
+      const fresh = await fetchSettingByTab(activeTab);
+      contentRef.current = fresh?.content ?? html;
+      savedRef.current = contentRef.current;
+      touchedRef.current = false;
+      setEditableContent(contentRef.current);
+      setLastUpdated(fresh?.updated_at ?? new Date().toISOString());
+      setIsDirty(false);
+
       showToast('Saved successfully!', 'success');
     } catch (err) {
       showToast(err.message || 'Failed to save.', 'error');
@@ -248,50 +259,36 @@ const SettingsPage = ({ onBackClick }) => {
       setSaving(false);
     }
   };
+  saveRef.current = handleSaveSetting;
 
-  // ── FAQ handlers ─────────────────────────────────────────────────────────
-  const handleCreateFaq = async () => {
-    if (!newTitle.trim() && !newContent.trim()) return;
-    setAddingFaq(true);
-    try {
-      const created = await createFaq({ title: newTitle, content: newContent });
-      setFaqs((prev) => [...prev, created]);
-      setNewTitle('');
-      setNewContent('');
-      showToast('FAQ created!', 'success');
-    } catch (err) {
-      showToast(err.message || 'Failed to create FAQ.', 'error');
-    } finally {
-      setAddingFaq(false);
-    }
-  };
+  // ── Ctrl/Cmd + S to save ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (activeTab === 'faq') return undefined;
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        saveRef.current?.();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTab]);
 
-  const handleUpdateFaq = async (id, payload) => {
-    try {
-      const updated = await updateFaq(id, payload);
-      setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, ...updated } : f)));
-      showToast('FAQ updated!', 'success');
-    } catch (err) {
-      showToast(err.message || 'Failed to update FAQ.', 'error');
-    }
-  };
-
-  const handleDeleteFaq = async (id) => {
-    if (!window.confirm('Delete this FAQ? This cannot be undone.')) return;
-    try {
-      await deleteFaq(id);
-      setFaqs((prev) => prev.filter((f) => f.id !== id));
-      showToast('FAQ deleted.', 'success');
-    } catch (err) {
-      showToast(err.message || 'Failed to delete FAQ.', 'error');
-    }
-  };
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
+  const updatedLabel = formatDate(lastUpdated);
+
   return (
     <div className="bg-white rounded-2xl min-h-screen text-black p-6 sm:p-8 font-inter">
+      <style>{PREVIEW_CSS}</style>
 
       {/* ── Page header ── */}
       <div className="flex items-center mb-6">
@@ -304,155 +301,186 @@ const SettingsPage = ({ onBackClick }) => {
             <ArrowLeftIcon className="h-6 w-6" />
           </button>
         )}
-        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="border-b border-gray-300">
-        <div className="flex justify-start bg-gray-100 rounded-t-lg overflow-x-auto scrollbar-hide">
-          {TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex-shrink-0 px-5 py-4 text-sm sm:text-[15px] font-medium relative transition-colors
-                ${activeTab === id ? 'text-black' : 'text-gray-500 hover:text-black'}`}
-            >
-              {label}
-              {activeTab === id && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] -mb-[1px] bg-[#FDD268] rounded-t" />
-              )}
-            </button>
-          ))}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Manage the legal pages and help content shown in your app.
+          </p>
         </div>
       </div>
 
+      {/* ── Tabs (pill style) ── */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-4">
+        {TABS.map(({ id, label, Icon }) => {
+          const active = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => handleTabChange(id)}
+              aria-current={active ? 'page' : undefined}
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
+                border transition-all
+                ${active
+                  ? 'bg-[#FDD268] border-[#FDD268] text-black shadow-sm'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black'}`}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── Tab panel ── */}
-      <div className="bg-gray-50 p-4 sm:p-6 rounded-b-lg -mt-px min-h-[400px]">
+      <div className="bg-gray-50 p-4 sm:p-6 rounded-2xl min-h-[400px]">
 
-        {loading ? <Spinner /> : activeTab === 'faq' ? (
-
-          /* ════════════════════════════════════════
-             FAQ TAB
-          ════════════════════════════════════════ */
-          <div>
-            {/* header */}
-            <div className="mb-5">
-              <h2 className="text-xl font-semibold">FAQ</h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {faqs.length} item{faqs.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-
-            {/* list */}
-            {faqs.length === 0 ? (
-              <p className="text-center text-gray-400 italic py-10">
-                No FAQs yet — add one below!
-              </p>
-            ) : (
-              faqs.map((faq) => (
-                <FaqRow
-                  key={faq.id}
-                  faq={faq}
-                  onSave={handleUpdateFaq}
-                  onDelete={handleDeleteFaq}
-                />
-              ))
-            )}
-
-            {/* ── Add new FAQ form ── */}
-            <div className="mt-6 border-2 border-dashed border-gray-300 rounded-xl p-5 bg-white">
-              <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <PlusIcon className="h-4 w-4 text-[#FDD268]" />
-                Add New FAQ
-              </p>
-
-              <input
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 mb-2
-                           focus:outline-none focus:ring-2 focus:ring-[#FDD268]"
-                placeholder="Question / Title"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-              <textarea
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 mb-4
-                           min-h-[90px] resize-y focus:outline-none focus:ring-2 focus:ring-[#FDD268]"
-                placeholder="Answer / Content"
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-              />
-
-              <button
-                onClick={handleCreateFaq}
-                disabled={addingFaq || (!newTitle.trim() && !newContent.trim())}
-                className="w-full flex justify-center items-center gap-2 rounded-lg bg-[#FDD268]
-                           hover:bg-yellow-300 text-black py-2.5 text-sm font-semibold
-                           transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {addingFaq ? (
-                  <>
-                    <div className="h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
-                    Creating…
-                  </>
-                ) : (
-                  <>
-                    <PlusIcon className="h-4 w-4" />
-                    Create FAQ
-                  </>
-                )}
-              </button>
-            </div>
+        {/* ── Section heading ── */}
+        <div className="flex items-start gap-3 mb-5">
+          <div className="h-11 w-11 rounded-xl bg-[#FDD268]/30 flex items-center justify-center flex-shrink-0">
+            {currentTab && <currentTab.Icon className="h-6 w-6 text-gray-800" />}
           </div>
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold">{currentTab?.label}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{currentTab?.desc}</p>
+          </div>
+        </div>
+
+        {activeTab === 'faq' ? (
+
+          /* ════════ FAQ TAB (alada component) ════════ */
+          <FaqSection />
 
         ) : (
 
-          /* ════════════════════════════════════════
-             RICH-TEXT TABS  (Privacy / Terms / About)
-          ════════════════════════════════════════ */
-          <>
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">
-                {TABS.find((t) => t.id === activeTab)?.label}
-              </h2>
-            </div>
+          /* ════════ RICH-TEXT TABS (Privacy / Terms / About) ════════ */
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 
-            <div className="rounded-md mb-6">
-              <JoditEditor
-                ref={editorRef}
-                value={editableContent}
-                config={joditConfig}
-                onChange={(val) => setEditableContent(val)}
-              />
-            </div>
+            {/* ── Card top bar: Edit/Preview + last updated ── */}
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 bg-gray-50">
+              <div className="inline-flex rounded-lg bg-gray-200/70 p-1">
+                <button
+                  type="button"
+                  onClick={() => switchMode('edit')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                    ${mode === 'edit' ? 'bg-white shadow-sm text-black' : 'text-gray-600 hover:text-black'}`}
+                >
+                  <PencilSquareIcon className="h-4 w-4" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('preview')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                    ${mode === 'preview' ? 'bg-white shadow-sm text-black' : 'text-gray-600 hover:text-black'}`}
+                >
+                  <EyeIcon className="h-4 w-4" />
+                  Preview
+                </button>
+              </div>
 
-            <button
-              type="button"
-              onClick={handleSaveSetting}
-              disabled={saving}
-              className="w-full flex justify-center items-center gap-2 rounded-lg bg-[#FDD268]
-                         hover:bg-yellow-300 text-black py-2.5 font-semibold text-sm
-                         transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <div className="h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                'Save & Change'
+              {updatedLabel && (
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <ClockIcon className="h-4 w-4" />
+                  Last updated: {updatedLabel}
+                </span>
               )}
-            </button>
-          </>
+            </div>
+
+            {/* ── Card body ── */}
+            {loading ? (
+              <EditorSkeleton />
+            ) : mode === 'edit' ? (
+              <div
+                onKeyDownCapture={markTouched}
+                onPointerDownCapture={markTouched}
+              >
+                <JoditEditor
+                  key={`${activeTab}-${editorKey}`}
+                  value={editableContent}
+                  config={joditConfig}
+                  onChange={handleEditorChange}
+                  onBlur={handleEditorBlur}
+                />
+              </div>
+            ) : (
+              <div className="p-5 sm:p-6 min-h-[380px]">
+                <div
+                  className="legal-preview"
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      contentRef.current ||
+                      '<p style="color:#9ca3af;font-style:italic">Nothing to preview yet. Switch to Edit and write something.</p>',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* ── Card footer: status + actions ── */}
+            <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+              {toast && (
+                <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+              )}
+
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+                {/* status */}
+                <div className="text-sm">
+                  {isDirty ? (
+                    <span className="flex items-center gap-2 text-amber-700">
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      You have unsaved changes
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-gray-500">
+                      <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                      All changes saved
+                    </span>
+                  )}
+                  <span className="hidden sm:inline text-xs text-gray-400 ml-3">
+                    Tip: press Ctrl + S to save
+                  </span>
+                </div>
+
+                {/* actions */}
+                <div className="flex items-center gap-2">
+                  {isDirty && (
+                    <button
+                      type="button"
+                      onClick={handleDiscard}
+                      disabled={saving}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100
+                                 transition-colors disabled:opacity-50"
+                    >
+                      <ArrowUturnLeftIcon className="h-4 w-4" />
+                      Discard
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSaveSetting}
+                    disabled={saving || loading}
+                    className="flex-1 sm:flex-none flex justify-center items-center gap-2 rounded-lg bg-[#FDD268]
+                               hover:bg-yellow-300 text-black px-6 py-2.5 font-semibold text-sm
+                               transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
+                        Saving…
+                      </>
+                    ) : (
+                      <>
+                        <CheckIcon className="h-4 w-4" />
+                        Save & Change
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
-
-      {/* ── Toast ── */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 };

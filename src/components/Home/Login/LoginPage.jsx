@@ -35,32 +35,32 @@ const LockIcon = () => (
 );
 
 const EyeIcon = ({ show }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="20" 
-    height="21" 
-    viewBox="0 0 20 21" 
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="21"
+    viewBox="0 0 20 21"
     fill="none"
   >
-    <path 
-      d="M17.9534 9.70425C18.2067 10.0595 18.3334 10.2372 18.3334 10.5001C18.3334 10.763 18.2067 10.9407 17.9534 11.2959C16.815 12.8922 13.9077 16.3334 10.0001 16.3334C6.0924 16.3334 3.18516 12.8922 2.04678 11.2959C1.79342 10.9407 1.66675 10.763 1.66675 10.5001C1.66675 10.2372 1.79342 10.0595 2.04678 9.70425C3.18516 8.10795 6.0924 4.66675 10.0001 4.66675C13.9077 4.66675 16.815 8.10795 17.9534 9.70425Z" 
-      stroke="#211F2F" 
+    <path
+      d="M17.9534 9.70425C18.2067 10.0595 18.3334 10.2372 18.3334 10.5001C18.3334 10.763 18.2067 10.9407 17.9534 11.2959C16.815 12.8922 13.9077 16.3334 10.0001 16.3334C6.0924 16.3334 3.18516 12.8922 2.04678 11.2959C1.79342 10.9407 1.66675 10.763 1.66675 10.5001C1.66675 10.2372 1.79342 10.0595 2.04678 9.70425C3.18516 8.10795 6.0924 4.66675 10.0001 4.66675C13.9077 4.66675 16.815 8.10795 17.9534 9.70425Z"
+      stroke="#211F2F"
       strokeWidth="1.5"
     />
     {!show && (
-      <line 
-        x1="3" 
-        y1="18" 
-        x2="17" 
-        y2="3" 
-        stroke="#211F2F" 
+      <line
+        x1="3"
+        y1="18"
+        x2="17"
+        y2="3"
+        stroke="#211F2F"
         strokeWidth="1.5"
       />
     )}
     {show && (
-      <path 
-        d="M12.5 10.5C12.5 9.11925 11.3807 8 10 8C8.61925 8 7.5 9.11925 7.5 10.5C7.5 11.8807 8.61925 13 10 13C11.3807 13 12.5 11.8807 12.5 10.5Z" 
-        stroke="#211F2F" 
+      <path
+        d="M12.5 10.5C12.5 9.11925 11.3807 8 10 8C8.61925 8 7.5 9.11925 7.5 10.5C7.5 11.8807 8.61925 13 10 13C11.3807 13 12.5 11.8807 12.5 10.5Z"
+        stroke="#211F2F"
         strokeWidth="1.5"
       />
     )}
@@ -100,7 +100,7 @@ export default function LoginPage() {
 
       if (response.success) {
         toast.success("Login Successful!");
-        
+
         // Set cookie expiry based on Remember Me
         if (rememberMe) {
           const token = response.data?.access;
@@ -109,7 +109,7 @@ export default function LoginPage() {
           const expires = "expires=" + date.toUTCString();
           document.cookie = `token=${token};${expires};path=/;SameSite=Lax`;
         }
-        
+
         // Redirect based on user role if available
         const redirectPath = response.data?.is_admin ? "/admin" : "/admin";
         setTimeout(() => {
@@ -148,7 +148,7 @@ export default function LoginPage() {
         </header>
 
         <main className="w-full flex justify-center">
-          <div className="w-full max-w-md flex flex-col gap-8"> 
+          <div className="w-full max-w-md flex flex-col gap-8">
             <div className="flex justify-center sm:justify-start "></div>
             <div className="self-stretch text-left sm:text-start">
               <h1 className="text-zinc-800 text-3xl font-semibold font-['Nunito'] leading-10">
@@ -182,6 +182,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    suppressHydrationWarning
                   />
                 </div>
               </div>
