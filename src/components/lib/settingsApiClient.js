@@ -1,19 +1,11 @@
-// ============================================
-// FILE: lib/settingsApiClient.js
-// Purpose: Settings & FAQ API Client Functions
-// All endpoints come from API_ENDPOINTS in api.js
-// Token is read from cookie (key: "token") — same as apiClient.js
-// ============================================
-
 import { API_ENDPOINTS } from "./api";
 
 // ─────────────────────────────────────────────────────────────
-// INTERNAL HELPERS  (mirrors apiClient.js pattern exactly)
+// INTERNAL HELPERS
 // ─────────────────────────────────────────────────────────────
 
-/** Read token from cookie — same logic as apiClient.js */
 const getTokenFromCookie = () => {
-  if (typeof document === "undefined") return null; // SSR guard
+  if (typeof document === "undefined") return null;
   const name = "token=";
   const decodedCookie = decodeURIComponent(document.cookie);
   const cookieArray = decodedCookie.split(";");
@@ -26,7 +18,6 @@ const getTokenFromCookie = () => {
   return null;
 };
 
-/** Build auth headers — throws if no token found */
 const getAuthHeaders = () => {
   const token = getTokenFromCookie();
   if (!token) throw new Error("Session expired. Please login again.");
@@ -36,18 +27,12 @@ const getAuthHeaders = () => {
   };
 };
 
-/**
- * Parse response — throws a readable error on non-2xx.
- * Handles 204 No Content gracefully.
- * Mirrors 401 handling from apiClient.js (clears bad cookie).
- */
 const handleResponse = async (res) => {
   if (res.status === 204) return { success: true };
 
   const data = await res.json().catch(() => null);
 
   if (res.status === 401) {
-    // Clear bad token — same as apiClient.js
     document.cookie = "token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;";
     throw new Error("Session expired. Please login again.");
   }
@@ -61,168 +46,151 @@ const handleResponse = async (res) => {
   return data;
 };
 
-// ─────────────────────────────────────────────────────────────
-// SETTINGS — Privacy / Terms / About Us
-// ─────────────────────────────────────────────────────────────
 
-/**
- * GET /api/settings/
- * Returns raw array of all setting objects.
- */
-export const getAllSettings = async () => {
-  const res = await fetch(API_ENDPOINTS.SETTINGS.GET_ALL, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
+const TAB_ENDPOINT_MAP = {
+  "privacy-security": API_ENDPOINTS.SETTINGS.PRIVACY_POLICY,
+  "terms-conditions": API_ENDPOINTS.SETTINGS.TERMS_AND_CONDITIONS,
+  "about-us": API_ENDPOINTS.SETTINGS.ABOUT_US,
+};
+
+const getEndpoint = (tabId) => {
+  const url = TAB_ENDPOINT_MAP[tabId];
+  if (!url) throw new Error(`Unknown tab key: "${tabId}"`);
+  return url;
+};
+
+const LANG = "en";
+
+const extractSetting = (data) => {
+  const item = Array.isArray(data) ? data[0] : data;
+  const tr = item?.translations?.[LANG];
+  return {
+    ...item,
+    title: tr?.title ?? item?.title ?? "",
+    content: tr?.content ?? item?.content ?? "",
+  };
 };
 
 /**
- * GET /api/settings/privacy-policy/
- * Returns { id, settings_type, title, content, ... }
- */
-export const getPrivacyPolicy = async () => {
-  const res = await fetch(API_ENDPOINTS.SETTINGS.PRIVACY_POLICY, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-  const data = await handleResponse(res);
-  return data?.data ?? data;
-};
-
-/**
- * GET /api/settings/terms-and-conditions/
- * Returns { id, settings_type, title, content, ... }
- */
-export const getTermsAndConditions = async () => {
-  const res = await fetch(API_ENDPOINTS.SETTINGS.TERMS_AND_CONDITIONS, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-  const data = await handleResponse(res);
-  return data?.data ?? data;
-};
-
-/**
- * GET /api/settings/about-us/
- * Returns { id, settings_type, title, content, ... }
- */
-export const getAboutUs = async () => {
-  const res = await fetch(API_ENDPOINTS.SETTINGS.ABOUT_US, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-  const data = await handleResponse(res);
-  return data?.data ?? data;
-};
-
-/**
- * PUT /api/settings/update/{type}/
- *
- * @param {"privacy" | "terms" | "about_us"} type
- * @param {{ content: string, title?: string }} payload
- */
-export const updateSetting = async (type, payload) => {
-  const res = await fetch(API_ENDPOINTS.SETTINGS.UPDATE(type), {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-  const data = await handleResponse(res);
-  return data?.data ?? data;
-};
-
-// ─────────────────────────────────────────────────────────────
-// TAB ↔ API MAPPING  (used by SettingsPage component)
-// ─────────────────────────────────────────────────────────────
-
-const TAB_FETCHER_MAP = {
-  "privacy-security": getPrivacyPolicy,
-  "terms-conditions": getTermsAndConditions,
-  "about-us":         getAboutUs,
-};
-
-const TAB_TYPE_MAP = {
-  "privacy-security": "privacy",
-  "terms-conditions": "terms",
-  "about-us":         "about_us",
-};
-
-/**
- * Fetch content for a given SettingsPage tab key.
+ * GET /api/settings/{privacy-policy|terms-and-conditions|about-us}/
+ * Returns { title, content, ... }
  * @param {"privacy-security" | "terms-conditions" | "about-us"} tabId
  */
 export const fetchSettingByTab = async (tabId) => {
-  const fetcher = TAB_FETCHER_MAP[tabId];
-  if (!fetcher) throw new Error(`Unknown tab key: "${tabId}"`);
-  return fetcher();
+  const res = await fetch(getEndpoint(tabId), {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await handleResponse(res);
+  return extractSetting(data?.data ?? data);
 };
 
 /**
- * Save HTML content for a given SettingsPage tab key.
+ * PUT /api/settings/{privacy-policy|terms-and-conditions|about-us}/
+ * Body: { title, content, translations: { en: { title, content } } }
  * @param {"privacy-security" | "terms-conditions" | "about-us"} tabId
  * @param {string} htmlContent  Rich-text HTML from the editor
  */
 export const saveSettingByTab = async (tabId, htmlContent) => {
-  const type = TAB_TYPE_MAP[tabId];
-  if (!type) throw new Error(`Unknown tab key: "${tabId}"`);
-  return updateSetting(type, { content: htmlContent });
+  const res = await fetch(getEndpoint(tabId), {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      title: "",
+      content: htmlContent,
+      translations: { [LANG]: { title: "", content: htmlContent } },
+    }),
+  });
+  const data = await handleResponse(res);
+  return extractSetting(data?.data ?? data);
 };
 
-// ─────────────────────────────────────────────────────────────
-// FAQ CRUD
-// ─────────────────────────────────────────────────────────────
+const extractFaqList = (data) => {
+  const d = data?.data ?? data;
+  if (Array.isArray(d)) return d;
+  const candidates = [d?.results, d?.faqs, d?.faq, d?.items, d?.data, d?.settings];
+  for (const c of candidates) {
+    if (Array.isArray(c)) return c;
+  }
+  return [];
+};
 
-/**
- * GET /api/settings/faq/
- * Returns array of FAQ objects: [{ id, settings_type, title, content, ... }]
- */
+const FAQ_TITLE_KEYS = ["title", "question", "name", "heading", "subject", "q"];
+const FAQ_CONTENT_KEYS = ["content", "answer", "description", "body", "text", "html", "a"];
+
+const pickString = (obj, keys) => {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (typeof v === "string" && v.trim() !== "") return v;
+  }
+  return "";
+};
+
+const normalizeFaq = (f) => {
+  if (!f || typeof f !== "object") return f;
+
+  let tr = f.translations;
+  if (Array.isArray(tr)) {
+    tr = tr.find((t) => t?.language === LANG || t?.lang === LANG) ?? tr[0];
+  } else if (tr && typeof tr === "object") {
+    tr = tr[LANG] ?? Object.values(tr)[0];
+  } else {
+    tr = undefined;
+  }
+
+  return {
+    ...f,
+    title: pickString(tr, FAQ_TITLE_KEYS) || pickString(f, FAQ_TITLE_KEYS),
+    content: pickString(tr, FAQ_CONTENT_KEYS) || pickString(f, FAQ_CONTENT_KEYS),
+  };
+};
+
+const buildFaqBody = (payload = {}) => {
+  const title = payload.title ?? "";
+  const content = payload.content ?? "";
+  return {
+    title,
+    content,
+    translations: { [LANG]: { title, content } },
+  };
+};
+
 export const getAllFaqs = async () => {
   const res = await fetch(API_ENDPOINTS.FAQ.GET_ALL, {
     method: "GET",
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(res);
-  return data?.data ?? data;
+  const list = extractFaqList(data);
+  console.log("FAQ GET raw response:", data);
+  console.log("FAQ first item:", JSON.stringify(list[0], null, 2));
+  return list.map(normalizeFaq);
 };
 
-/**
- * POST /api/settings/faq/
- * @param {{ title: string, content: string }} payload
- */
 export const createFaq = async (payload) => {
   const res = await fetch(API_ENDPOINTS.FAQ.CREATE, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildFaqBody(payload)),
   });
   const data = await handleResponse(res);
-  return data?.data ?? data;
+  return normalizeFaq(data?.data ?? data);
 };
 
-/**
- * PUT /api/settings/faq/{id}/
- * @param {number} id
- * @param {{ title?: string, content?: string }} payload
- */
 export const updateFaq = async (id, payload) => {
   const res = await fetch(API_ENDPOINTS.FAQ.UPDATE(id), {
     method: "PUT",
     headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildFaqBody(payload)),
   });
   const data = await handleResponse(res);
-  return data?.data ?? data;
+  return normalizeFaq(data?.data ?? data);
 };
 
-/**
- * DELETE /api/settings/faq/{id}/
- * @param {number} id
- */
 export const deleteFaq = async (id) => {
   const res = await fetch(API_ENDPOINTS.FAQ.DELETE(id), {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  return handleResponse(res); // handles 204 No Content
+  return handleResponse(res);
 };
