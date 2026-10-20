@@ -22,6 +22,7 @@ const EditIcon = () => (
 
 const ItemsList = ({
   items = [],
+  subCategoryMap = {}, // sub-category id -> main category name
   onEdit,
   onDelete,
   loading,
@@ -31,7 +32,26 @@ const ItemsList = ({
   onPageChange,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const filteredItems = searchItems(items, searchQuery);
+
+  // Main category name for an item (item.category is the sub-category id)
+  const getMainCategory = (rawItem) => subCategoryMap[rawItem.category] || "";
+
+  // "Communication → Aid" (falls back to just "Aid" if main category is unknown)
+  const getCategoryLabel = (rawItem, subName) => {
+    const main = getMainCategory(rawItem);
+    if (main && subName) return `${main} → ${subName}`;
+    return subName || main || "—";
+  };
+
+  // Normal search, plus match on the main category name.
+  const q = searchQuery.trim().toLowerCase();
+  const filteredItems = q
+    ? items.filter(
+        (it) =>
+          searchItems([it], searchQuery).length > 0 ||
+          getMainCategory(it).toLowerCase().includes(q)
+      )
+    : items;
 
   // Show a full-row spinner only when there's nothing to show yet
   // (e.g. first load, or search cleared out everything). Once we already
@@ -76,7 +96,7 @@ const ItemsList = ({
           <table className="min-w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Sub-Category</th>
+                <th className="text-left px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Category → Sub-Category</th>
                 <th className="text-left px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Word</th>
                 <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Icon</th>
                 <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Color</th>
@@ -101,7 +121,7 @@ const ItemsList = ({
                     <tr key={item.id} className="hover:bg-amber-50/30 transition-colors">
                       <td className="px-6 py-4">
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">
-                          {item.category_name || "—"}
+                          {getCategoryLabel(rawItem, item.category_name)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-800">{item.formattedWord}</td>

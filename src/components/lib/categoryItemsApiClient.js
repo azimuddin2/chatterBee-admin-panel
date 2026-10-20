@@ -169,6 +169,9 @@ export const createItem = async (
   }
 };
 
+// Replace the existing `updateItem` in categoryItemsApiClient.js with this.
+// Changes: new last parameter `categoryId`, sent to the backend as "category".
+
 export const updateItem = async (
   itemId,
   word,
@@ -178,7 +181,8 @@ export const updateItem = async (
   audioFile = null,
   isActive = true,
   lang = "en",
-  buddyMode = false
+  buddyMode = false,
+  categoryId = null
 ) => {
   const token = getToken();
   if (!token) return { success: false, data: null, message: "No authentication token found", isAuthError: true };
@@ -193,6 +197,12 @@ export const updateItem = async (
     formData.append("lang", lang);
     formData.append("buddy_mode", buddyMode);
     if (speakAs && speakAs.trim()) formData.append("speak_as", speakAs.trim());
+
+    // NEW: send the (possibly changed) sub-category.
+    // Use the SAME field name createItem uses for the category.
+    if (categoryId !== null && categoryId !== undefined && categoryId !== "") {
+      formData.append("category", categoryId);
+    }
 
     if (imageFile) {
       if (imageFile.size > 5 * 1024 * 1024) return { success: false, data: null, message: "Image file size must be less than 5MB" };

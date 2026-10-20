@@ -4,6 +4,7 @@ import {
   deleteItem,
   getAllItems,
 } from "@/components/lib/categoryItemsApiClient";
+import { getAllSubCategories } from "@/components/lib/subCategoriesApiClient";
 
 import React, {
   useCallback,
@@ -50,8 +51,28 @@ export default function AllItemsManage() {
   // Error
   const [error, setError] = useState("");
 
+  // sub-category id -> main category name (used to show "Category → Sub-Category")
+  const [subCategoryMap, setSubCategoryMap] = useState({});
+
   // Items per API request
   const pageSize = 200;
+
+  // ─────────────────────────────────────────────
+  // Fetch sub-categories once (for the main category names)
+  // ─────────────────────────────────────────────
+
+  useEffect(() => {
+    let cancelled = false;
+    getAllSubCategories().then((res) => {
+      if (cancelled || !res?.success) return;
+      const map = {};
+      (res.data || []).forEach((sc) => {
+        map[sc.id] = sc.main_category_name || "";
+      });
+      setSubCategoryMap(map);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // ─────────────────────────────────────────────
   // Fetch Items
@@ -184,6 +205,7 @@ export default function AllItemsManage() {
         return (
           <ItemsList
             items={allItems}
+            subCategoryMap={subCategoryMap}
             onEdit={handleEditClick}
             onDelete={handleDelete}
             loading={loading}
