@@ -135,7 +135,7 @@ export const createItem = async (
 ) => {
   const token = getToken();
   if (!token) return { success: false, data: null, message: "No authentication token found", isAuthError: true };
-  if (!subCategoryId) return { success: false, data: null, message: "Sub-Category ID is required" };
+
   if (!word || !word.trim()) return { success: false, data: null, message: "Item/Button word is required" };
 
   try {

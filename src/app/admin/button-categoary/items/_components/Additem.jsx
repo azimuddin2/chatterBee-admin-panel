@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { createItem } from '@/components/lib/categoryItemsApiClient';
 import { COLORS } from '@/components/shared/constants';
@@ -13,9 +13,25 @@ import {
 } from '../../sub-cetegoary/_components/shared/ui';
 import { formatSubCategory, getAllSubCategories } from '@/components/lib/subCategoriesApiClient';
 
+// Ekta sub-category kon main category-r under e, seta identify korar key.
+const getCatKey = (sc) => sc.main_category_id ?? sc.main_category_name ?? null;
+
+function ClearButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="absolute top-0 right-0 text-xs font-semibold text-amber-600 hover:text-amber-500"
+        >
+            Clear
+        </button>
+    );
+}
+
 export default function AddItem({ onDone, onCancel }) {
     const [subCategories, setSubCategories] = useState([]);
     const [subCatLoading, setSubCatLoading] = useState(false);
+    const [selectedCat, setSelectedCat] = useState(null);
     const [selectedSub, setSelectedSub] = useState(null);
 
     const [word, setWord] = useState('');
@@ -51,6 +67,72 @@ export default function AddItem({ onDone, onCancel }) {
         if (selectedSub?.buddy_mode) setBuddyMode(true);
     }, [selectedSub]);
 
+    // ── Category options (sub-category list theke unique main category) ──
+    const categoryOptions = useMemo(() => {
+        const map = new Map();
+        subCategories.forEach(sc => {
+            const key = getCatKey(sc);
+            if (key === null || map.has(key)) return;
+            map.set(key, {
+                id: key,
+                name: sc.main_category_name || 'Unknown',
+                displayLabel: sc.main_category_name || 'Unknown',
+            });
+        });
+        return Array.from(map.values());
+    }, [subCategories]);
+
+    // ── Sub-category options (category select thakle sudhu oi category-r gulo) ──
+    const subCatOptions = useMemo(() => {
+        const list = selectedCat
+            ? subCategories.filter(sc => getCatKey(sc) === selectedCat.id)
+            : subCategories;
+
+        return list.map(sc => {
+            const formatted = formatSubCategory(sc);
+            const displayLabel = selectedCat
+                ? formatted.formattedName
+                : `${sc.main_category_name || 'Unknown'} → ${formatted.formattedName}`;
+            return { ...sc, displayLabel };
+        });
+    }, [subCategories, selectedCat]);
+
+    // ── Handlers ──
+    const handleCategorySelect = (cat) => {
+        setSelectedCat(cat);
+        // Notun category-r sathe na mille age-r sub-category clear
+        if (selectedSub && getCatKey(selectedSub) !== cat.id) {
+            setSelectedSub(null);
+            setBuddyMode(false);
+        }
+    };
+
+    const handleCategoryClear = () => {
+        setSelectedCat(null);
+        setSelectedSub(null);
+        setBuddyMode(false);
+    };
+
+    const handleSubSelect = (sc) => {
+        setSelectedSub(sc);
+        // Category select kora na thakle sub-category theke auto-set
+        if (!selectedCat) {
+            const key = getCatKey(sc);
+            if (key !== null) {
+                setSelectedCat({
+                    id: key,
+                    name: sc.main_category_name || 'Unknown',
+                    displayLabel: sc.main_category_name || 'Unknown',
+                });
+            }
+        }
+    };
+
+    const handleSubClear = () => {
+        setSelectedSub(null);
+        setBuddyMode(false);
+    };
+
     const handleImageChange = (e) => {
         const f = e.target.files[0];
         if (!f) return;
@@ -71,43 +153,56 @@ export default function AddItem({ onDone, onCancel }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!selectedSub) { toast.error('Please select a sub-category'); return; }
         if (!word.trim()) { toast.error('Item word is required'); return; }
 
         setSubmitting(true);
         toast.loading('Creating item...', { id: 'save-item' });
         const res = await createItem(
-            selectedSub.id, word.trim(), speakAs, color.value, imageFile, audioFile, true, lang, effectiveBuddyMode
+            selectedSub?.id ?? null, // sub-category na thakle null
+            word.trim(), speakAs, color.value, imageFile, audioFile, true, lang, effectiveBuddyMode
         );
         if (!res.success) { toast.error(res.message, { id: 'save-item' }); setSubmitting(false); return; }
-
         toast.success('Item created! 🎉', { id: 'save-item' });
         setSubmitting(false);
         onDone();
     };
 
-    // Sub-category options with a display name that includes the main category
-    // for context, e.g. "Food → Fruit".
-    const subCatOptions = subCategories.map(sc => {
-        const formatted = formatSubCategory(sc);
-        return { ...sc, displayLabel: `${sc.main_category_name || 'Unknown'} → ${formatted.formattedName}` };
-    });
-
     return (
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
             <h2 className="text-xl font-bold text-gray-800 mb-1">Add Item</h2>
-            <p className="text-sm text-gray-400 mb-6">Create a new item/button under a sub-category.</p>
+            <p className="text-sm text-gray-400 mb-6">
+                Create a new item/button. Category and sub-category are optional.
+            </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-                <SmartDropdown
-                    label="Sub-Category"
-                    value={selectedSub}
-                    options={subCatOptions}
-                    onSelect={setSelectedSub}
-                    placeholder="Select a sub-category..."
-                    loading={subCatLoading}
-                    renderName={(sc) => sc.displayLabel}
-                />
+                {/* Category */}
+                <div className="relative">
+                    {selectedCat && <ClearButton onClick={handleCategoryClear} />}
+                    <SmartDropdown
+                        label="Category (optional)"
+                        value={selectedCat}
+                        options={categoryOptions}
+                        onSelect={handleCategorySelect}
+                        placeholder="Select a category..."
+                        loading={subCatLoading}
+                        renderName={(c) => c.displayLabel}
+                    />
+                </div>
+
+                {/* Sub-Category */}
+                <div className="relative">
+                    {selectedSub && <ClearButton onClick={handleSubClear} />}
+                    <SmartDropdown
+                        label="Sub-Category (optional)"
+                        value={selectedSub}
+                        options={subCatOptions}
+                        onSelect={handleSubSelect}
+                        placeholder="Select a sub-category..."
+                        loading={subCatLoading}
+                        renderName={(sc) => sc.displayLabel}
+                    />
+                </div>
+
                 {parentBuddyMode && (
                     <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200 -mt-2">
                         <span>🔒</span>
@@ -167,7 +262,7 @@ export default function AddItem({ onDone, onCancel }) {
                         Cancel
                     </button>
                     <button
-                        type="submit" disabled={submitting || !selectedSub}
+                        type="submit" disabled={submitting}
                         className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors"
                     >
                         {submitting ? <><Spinner sm /> Creating...</> : '✓ Create Item'}
