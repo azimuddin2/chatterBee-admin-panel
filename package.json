@@ -6,7 +6,8 @@
     "dev": "node init && next dev",
     "build": "node init && next build",
     "start": "node init && next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prettier": "npx prettier --ignore-path .prettierignore --write \"./src/**/*.{js,jsx,ts,tsx,json}\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
