@@ -8,8 +8,8 @@ import { API_ENDPOINTS } from "./api";
 const getToken = () => {
   if (typeof document === "undefined") return null;
   const tokenCookie = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('token='));
+    .split("; ")
+    .find((row) => row.startsWith("token="));
   return tokenCookie ? tokenCookie.substring(6) : null;
 };
 
@@ -47,9 +47,7 @@ export const getAllRootCategories = async ({
     console.log("CATEGORY ARRAY:", result?.data?.categories);
 
     if (!response.ok) {
-      throw new Error(
-        result?.message || "Failed to fetch categories"
-      );
+      throw new Error(result?.message || "Failed to fetch categories");
     }
 
     return {
@@ -86,15 +84,30 @@ export const getSingleCategory = async (categoryId) => {
   if (!categoryId) throw new Error("Category ID is required");
 
   try {
-    const response = await fetch(API_ENDPOINTS.CATEGORIES.GET_SINGLE_CATEGORY(categoryId), {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
-    });
+    const response = await fetch(
+      API_ENDPOINTS.CATEGORIES.GET_SINGLE_CATEGORY(categoryId),
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to fetch category");
-    return { success: true, data: data.data || null, message: data.message || "Category fetched successfully" };
+    if (!response.ok)
+      throw new Error(data.message || "Failed to fetch category");
+    return {
+      success: true,
+      data: data.data || null,
+      message: data.message || "Category fetched successfully",
+    };
   } catch (error) {
-    return { success: false, data: null, message: error.message || "Failed to fetch category" };
+    return {
+      success: false,
+      data: null,
+      message: error.message || "Failed to fetch category",
+    };
   }
 };
 
@@ -115,7 +128,7 @@ export const createCategory = async (
   audioFile = null,
   isActive = true,
   lang = "en",
-  buddyMode = false
+  buddyMode = false,
 ) => {
   const token = getToken();
   if (!token) throw new Error("No authentication token found");
@@ -130,24 +143,38 @@ export const createCategory = async (
     formData.append("buddy_mode", buddyMode);
 
     if (imageFile) {
-      if (imageFile.size > 5 * 1024 * 1024) throw new Error("Image file size must be less than 5MB");
+      if (imageFile.size > 5 * 1024 * 1024)
+        throw new Error("Image file size must be less than 5MB");
       formData.append("image_icon", imageFile);
     }
     if (audioFile) {
-      if (audioFile.size > 10 * 1024 * 1024) throw new Error("Audio file size must be less than 10MB");
+      if (audioFile.size > 10 * 1024 * 1024)
+        throw new Error("Audio file size must be less than 10MB");
       formData.append("speak", audioFile);
     }
 
-    const response = await fetch(API_ENDPOINTS.CATEGORIES.CREATE_ROOT_CATEGORY, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}` },
-      body: formData
-    });
+    const response = await fetch(
+      API_ENDPOINTS.CATEGORIES.CREATE_ROOT_CATEGORY,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      },
+    );
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to create category");
-    return { success: true, data: data.data || null, message: data.message || "Category created successfully" };
+    if (!response.ok)
+      throw new Error(data.message || "Failed to create category");
+    return {
+      success: true,
+      data: data.data || null,
+      message: data.message || "Category created successfully",
+    };
   } catch (error) {
-    return { success: false, data: null, message: error.message || "Failed to create category" };
+    return {
+      success: false,
+      data: null,
+      message: error.message || "Failed to create category",
+    };
   }
 };
 
@@ -170,7 +197,7 @@ export const updateCategory = async (
   audioFile = null,
   isActive = true,
   lang = "en",
-  buddyMode = false
+  buddyMode = false,
 ) => {
   const token = getToken();
   if (!token) throw new Error("No authentication token found");
@@ -186,24 +213,38 @@ export const updateCategory = async (
     formData.append("buddy_mode", buddyMode);
 
     if (imageFile) {
-      if (imageFile.size > 5 * 1024 * 1024) throw new Error("Image file size must be less than 5MB");
+      if (imageFile.size > 5 * 1024 * 1024)
+        throw new Error("Image file size must be less than 5MB");
       formData.append("image_icon", imageFile);
     }
     if (audioFile) {
-      if (audioFile.size > 10 * 1024 * 1024) throw new Error("Audio file size must be less than 10MB");
+      if (audioFile.size > 10 * 1024 * 1024)
+        throw new Error("Audio file size must be less than 10MB");
       formData.append("speak", audioFile);
     }
 
-    const response = await fetch(API_ENDPOINTS.CATEGORIES.UPDATE_CATEGORY(categoryId), {
-      method: "PUT",
-      headers: { "Authorization": `Bearer ${token}` },
-      body: formData
-    });
+    const response = await fetch(
+      API_ENDPOINTS.CATEGORIES.UPDATE_CATEGORY(categoryId),
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      },
+    );
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to update category");
-    return { success: true, data: data.data || null, message: data.message || "Category updated successfully" };
+    if (!response.ok)
+      throw new Error(data.message || "Failed to update category");
+    return {
+      success: true,
+      data: data.data || null,
+      message: data.message || "Category updated successfully",
+    };
   } catch (error) {
-    return { success: false, data: null, message: error.message || "Failed to update category" };
+    return {
+      success: false,
+      data: null,
+      message: error.message || "Failed to update category",
+    };
   }
 };
 
@@ -213,16 +254,30 @@ export const deleteCategory = async (categoryId) => {
   if (!categoryId) throw new Error("Category ID is required");
 
   try {
-    const response = await fetch(API_ENDPOINTS.CATEGORIES.DELETE_CATEGORY(categoryId), {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
-    });
-    if (response.status === 204) return { success: true, message: "Category deleted successfully" };
+    const response = await fetch(
+      API_ENDPOINTS.CATEGORIES.DELETE_CATEGORY(categoryId),
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    if (response.status === 204)
+      return { success: true, message: "Category deleted successfully" };
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to delete category");
-    return { success: true, message: data.message || "Category deleted successfully" };
+    if (!response.ok)
+      throw new Error(data.message || "Failed to delete category");
+    return {
+      success: true,
+      message: data.message || "Category deleted successfully",
+    };
   } catch (error) {
-    return { success: false, message: error.message || "Failed to delete category" };
+    return {
+      success: false,
+      message: error.message || "Failed to delete category",
+    };
   }
 };
 
@@ -240,7 +295,7 @@ export const getTranslatedName = (translations, lang = "en") => {
 export const searchCategories = (categories, searchQuery) => {
   if (!searchQuery || !searchQuery.trim()) return categories;
   const query = searchQuery.toLowerCase().trim();
-  return categories.filter(category => {
+  return categories.filter((category) => {
     const name = getTranslatedName(category.translations);
     return name.toLowerCase().includes(query);
   });
@@ -251,7 +306,9 @@ export const sortCategories = (categories, field = "name", order = "asc") => {
     const valueA = a[field];
     const valueB = b[field];
     if (typeof valueA === "string") {
-      return order === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      return order === "asc"
+        ? valueA.localeCompare(valueB)
+        : valueB.localeCompare(valueA);
     }
     return order === "asc" ? valueA - valueB : valueB - valueA;
   });
@@ -260,10 +317,13 @@ export const sortCategories = (categories, field = "name", order = "asc") => {
 
 export const getCategoriesSummary = (categories) => ({
   total: categories.length,
-  active: categories.filter(c => c.is_active).length,
-  inactive: categories.filter(c => !c.is_active).length,
-  deleted: categories.filter(c => c.is_deleted).length,
-  totalSubCategories: categories.reduce((sum, c) => sum + (c.sub_categories_count || 0), 0)
+  active: categories.filter((c) => c.is_active).length,
+  inactive: categories.filter((c) => !c.is_active).length,
+  deleted: categories.filter((c) => c.is_deleted).length,
+  totalSubCategories: categories.reduce(
+    (sum, c) => sum + (c.sub_categories_count || 0),
+    0,
+  ),
 });
 
 export const formatCategory = (category, lang = "en") => {
@@ -275,16 +335,23 @@ export const formatCategory = (category, lang = "en") => {
     statusBadge: category.is_active ? "Active" : "Inactive",
     statusColor: category.is_active ? "green" : "gray",
     hasImage: !!category.image_icon,
-    hasAudio: !!(category.translations?.[lang]?.speak),
+    hasAudio: !!category.translations?.[lang]?.speak,
     subCategoriesText: `${category.sub_categories_count || 0} sub-categories`,
     buddyMode: category.buddy_mode || false,
   };
 };
 
 export const categoryApiClient = {
-  getAllRootCategories, getSingleCategory, createCategory, updateCategory,
-  deleteCategory, searchCategories, sortCategories, getCategoriesSummary,
-  formatCategory, getTranslatedName
+  getAllRootCategories,
+  getSingleCategory,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  searchCategories,
+  sortCategories,
+  getCategoriesSummary,
+  formatCategory,
+  getTranslatedName,
 };
 
 export default categoryApiClient;

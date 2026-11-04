@@ -1,5 +1,5 @@
 "use client";
-import { getAllRootCategories } from '@/components/lib/categoryApiClient';
+import { getAllRootCategories } from "@/components/lib/categoryApiClient";
 
 /**
  * Fetches all root categories (with nested sub_categories/items) from the API.
@@ -21,8 +21,8 @@ export const fetchRootCategories = async () => {
  * @param {string} [lang='en'] - preferred language code, e.g. 'en' | 'es'
  * @returns {string}
  */
-export const getCatName = (category, lang = 'en') => {
-  if (!category || !category.translations) return 'Untitled';
+export const getCatName = (category, lang = "en") => {
+  if (!category || !category.translations) return "Untitled";
 
   const translations = category.translations;
 
@@ -35,5 +35,5 @@ export const getCatName = (category, lang = 'en') => {
   }
 
   const firstAvailable = Object.values(translations).find((t) => t?.name);
-  return firstAvailable?.name || 'Untitled';
+  return firstAvailable?.name || "Untitled";
 };

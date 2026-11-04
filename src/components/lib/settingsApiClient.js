@@ -46,7 +46,6 @@ const handleResponse = async (res) => {
   return data;
 };
 
-
 const TAB_ENDPOINT_MAP = {
   "privacy-security": API_ENDPOINTS.SETTINGS.PRIVACY_POLICY,
   "terms-conditions": API_ENDPOINTS.SETTINGS.TERMS_AND_CONDITIONS,
@@ -108,7 +107,14 @@ export const saveSettingByTab = async (tabId, htmlContent) => {
 const extractFaqList = (data) => {
   const d = data?.data ?? data;
   if (Array.isArray(d)) return d;
-  const candidates = [d?.results, d?.faqs, d?.faq, d?.items, d?.data, d?.settings];
+  const candidates = [
+    d?.results,
+    d?.faqs,
+    d?.faq,
+    d?.items,
+    d?.data,
+    d?.settings,
+  ];
   for (const c of candidates) {
     if (Array.isArray(c)) return c;
   }
@@ -116,7 +122,15 @@ const extractFaqList = (data) => {
 };
 
 const FAQ_TITLE_KEYS = ["title", "question", "name", "heading", "subject", "q"];
-const FAQ_CONTENT_KEYS = ["content", "answer", "description", "body", "text", "html", "a"];
+const FAQ_CONTENT_KEYS = [
+  "content",
+  "answer",
+  "description",
+  "body",
+  "text",
+  "html",
+  "a",
+];
 
 const pickString = (obj, keys) => {
   for (const k of keys) {
@@ -141,7 +155,8 @@ const normalizeFaq = (f) => {
   return {
     ...f,
     title: pickString(tr, FAQ_TITLE_KEYS) || pickString(f, FAQ_TITLE_KEYS),
-    content: pickString(tr, FAQ_CONTENT_KEYS) || pickString(f, FAQ_CONTENT_KEYS),
+    content:
+      pickString(tr, FAQ_CONTENT_KEYS) || pickString(f, FAQ_CONTENT_KEYS),
   };
 };
 

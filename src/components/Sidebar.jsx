@@ -18,23 +18,22 @@ import Image from "next/image";
 import barss from "../../public/icon/bars.png";
 import { logoutUser } from "./lib/apiClient";
 
-
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/user-management", icon: Users },
   {
-    name: 'All Category',
-    href: '/admin/button-categoary',
+    name: "All Category",
+    href: "/admin/button-categoary",
     icon: CirclePower,
     hasDropdown: true,
     dropdownItems: [
       { name: "Category", href: "/admin/button-categoary/category" },
       { name: "Sub Category", href: "/admin/button-categoary/sub-cetegoary" },
       { name: "All Items", href: "/admin/button-categoary/items" },
-    ]
+    ],
   },
   { name: "Quick Speak", href: "/admin/quick-speak", icon: MegaphoneIcon },
-  { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
+  { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -44,7 +43,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   const isDropdownItemActive = (item) => {
     if (item.hasDropdown) {
-      return item.dropdownItems?.some(dropdownItem => pathname === dropdownItem.href) || pathname === item.href;
+      return (
+        item.dropdownItems?.some(
+          (dropdownItem) => pathname === dropdownItem.href,
+        ) || pathname === item.href
+      );
     }
     return pathname === item.href;
   };
@@ -52,8 +55,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   return (
     <>
       <aside
-        className={`fixed top-0 left-0 h-full bg-white text-black shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0 w-64" : "-translate-x-full w-64"
-          }`}
+        className={`fixed top-0 left-0 h-full bg-white text-black shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0 w-64" : "-translate-x-full w-64"
+        }`}
       >
         <div className="flex flex-col h-full justify-between border-r border-[#D6D6D6]">
           {/* Logo & Close Button */}
@@ -88,65 +92,78 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
           {/* Navigation Items */}
           <nav className="mt-4 space-y-6 flex-grow overflow-y-auto">
-            {navItems.map(({ name, href, icon: Icon, hasDropdown, dropdownItems }) => {
-              const isActive = isDropdownItemActive({ name, href, icon: Icon, hasDropdown, dropdownItems });
+            {navItems.map(
+              ({ name, href, icon: Icon, hasDropdown, dropdownItems }) => {
+                const isActive = isDropdownItemActive({
+                  name,
+                  href,
+                  icon: Icon,
+                  hasDropdown,
+                  dropdownItems,
+                });
 
-              if (hasDropdown) {
-                return (
-                  <div key={name}>
-                    <button
-                      onClick={() => setDropdownOpen(!dropdownOpen)}
-                      className={`flex items-center justify-between px-4 w-[218px] mx-auto py-2 transition-all rounded ${isActive
-                          ? "bg-[#FDD268] text-black"
-                          : "hover:bg-gray-100"
+                if (hasDropdown) {
+                  return (
+                    <div key={name}>
+                      <button
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        className={`flex items-center justify-between px-4 w-[218px] mx-auto py-2 transition-all rounded ${
+                          isActive
+                            ? "bg-[#FDD268] text-black"
+                            : "hover:bg-gray-100"
                         }`}
-                    >
-                      <div className="flex items-center">
-                        <Icon className="w-5 h-5 mr-3" />
-                        <span className="font-normal text-[13px]">{name}</span>
-                      </div>
-                      {dropdownOpen ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </button>
+                      >
+                        <div className="flex items-center">
+                          <Icon className="w-5 h-5 mr-3" />
+                          <span className="font-normal text-[13px]">
+                            {name}
+                          </span>
+                        </div>
+                        {dropdownOpen ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </button>
 
-                    {dropdownOpen && (
-                      <div className="ml-8 mt-2 space-y-2">
-                        {dropdownItems.map((dropdownItem) => (
-                          <Link
-                            key={dropdownItem.name}
-                            href={dropdownItem.href}
-                            className={`flex items-center px-4 py-2 rounded transition-all ${pathname === dropdownItem.href
-                                ? "bg-[#FDD268] text-black"
-                                : "hover:bg-gray-100"
+                      {dropdownOpen && (
+                        <div className="ml-8 mt-2 space-y-2">
+                          {dropdownItems.map((dropdownItem) => (
+                            <Link
+                              key={dropdownItem.name}
+                              href={dropdownItem.href}
+                              className={`flex items-center px-4 py-2 rounded transition-all ${
+                                pathname === dropdownItem.href
+                                  ? "bg-[#FDD268] text-black"
+                                  : "hover:bg-gray-100"
                               }`}
-                          >
-                            <div className="w-2 h-2 rounded-full bg-gray-400 mr-3"></div>
-                            <span className="font-normal text-[13px]">{dropdownItem.name}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                            >
+                              <div className="w-2 h-2 rounded-full bg-gray-400 mr-3"></div>
+                              <span className="font-normal text-[13px]">
+                                {dropdownItem.name}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
-              return (
-                <Link
-                  key={name}
-                  href={href}
-                  className={`flex items-center px-4 w-[218px] mx-auto py-2 transition-all rounded ${isActive
-                      ? "bg-[#FDD268] text-black"
-                      : "hover:bg-gray-100"
+                return (
+                  <Link
+                    key={name}
+                    href={href}
+                    className={`flex items-center px-4 w-[218px] mx-auto py-2 transition-all rounded ${
+                      isActive ? "bg-[#FDD268] text-black" : "hover:bg-gray-100"
                     }`}
-                >
-                  <Icon className="w-5 h-5 mr-3" />
-                  <span className="font-normal text-[13px]">{name}</span>
-                </Link>
-              );
-            })}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    <span className="font-normal text-[13px]">{name}</span>
+                  </Link>
+                );
+              },
+            )}
 
             {/* Logout Button */}
             <div className="border-t border-[#D6D6D6] pt-6 ">

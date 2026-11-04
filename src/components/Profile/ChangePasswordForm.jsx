@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { changePassword } from "../lib/apiClient";
 
-
 export default function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -13,7 +12,7 @@ export default function ChangePasswordForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!currentPassword.trim()) {
       toast.error("Please enter your current password");
@@ -45,11 +44,11 @@ export default function ChangePasswordForm() {
       const response = await changePassword(
         currentPassword,
         newPassword,
-        confirmedPassword,        
+        confirmedPassword,
       );
       if (response.success) {
         toast.success(response.message || "Password changed successfully!");
-        
+
         // Clear form
         setCurrentPassword("");
         setNewPassword("");
@@ -59,10 +58,10 @@ export default function ChangePasswordForm() {
       }
     } catch (error) {
       console.error("Error changing password:", error);
-      
+
       // Handle specific error messages
       let errorMessage = "Failed to change password";
-      
+
       if (error.message?.includes("current password")) {
         errorMessage = "Current password is incorrect";
       } else if (error.message?.includes("match")) {
@@ -70,7 +69,7 @@ export default function ChangePasswordForm() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -96,7 +95,7 @@ export default function ChangePasswordForm() {
           disabled={isLoading}
         />
       </div>
-      
+
       <div className="mb-4 w-full max-w-[982px]">
         <label
           htmlFor="newPassword"
@@ -118,7 +117,7 @@ export default function ChangePasswordForm() {
           Password must be at least 8 characters long
         </p>
       </div>
-      
+
       <div className="mb-6 w-full max-w-[982px]">
         <label
           htmlFor="confirmedPassword"
@@ -137,7 +136,7 @@ export default function ChangePasswordForm() {
           minLength={8}
         />
       </div>
-      
+
       <div className="flex items-center justify-center mt-6 md:w-[982px]">
         <button
           type="submit"

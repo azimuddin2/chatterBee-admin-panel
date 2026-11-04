@@ -1,15 +1,12 @@
-
-
-import UserList from '@/components/UserManagement/UserManagements'
-import React from 'react'
+import UserList from "@/components/UserManagement/UserManagements";
+import React from "react";
 
 const UserManagement = () => {
   return (
     <div>
-
-        <UserList/>
+      <UserList />
     </div>
-  )
-}
+  );
+};
 
-export default UserManagement
+export default UserManagement;

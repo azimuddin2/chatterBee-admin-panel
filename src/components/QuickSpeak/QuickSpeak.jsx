@@ -14,53 +14,126 @@ import {
 // ============================================
 
 const PlusIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 mr-2"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
 const UploadIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-10 w-10 text-gray-400"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
     <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.414l-1.293 1.293a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L13 9.414V13h-2.5z" />
     <path d="M9 13h2v5H9v-5z" />
   </svg>
 );
 
 const LoadingSpinner = () => (
-  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  <svg
+    className="animate-spin h-5 w-5"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    ></circle>
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    ></path>
   </svg>
 );
 
 const TrashIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
   </svg>
 );
 
 const AudioIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="mx-auto h-10 w-10 text-gray-400"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+    />
   </svg>
 );
 
 // NEW: Play and Pause Icons for audio playback
 const PlayIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
 const PauseIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
@@ -73,10 +146,12 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
   const [color, setColor] = useState(initialData?.color || "#FFD700");
   const [order, setOrder] = useState(initialData?.order ?? 1);
   const [isActive, setIsActive] = useState(
-    initialData?.is_active !== undefined ? initialData.is_active : true
+    initialData?.is_active !== undefined ? initialData.is_active : true,
   );
   const [imageIcon, setImageIcon] = useState(null);
-  const [imagePreview, setImagePreview] = useState(initialData?.image_icon || "");
+  const [imagePreview, setImagePreview] = useState(
+    initialData?.image_icon || "",
+  );
   const [speak, setSpeak] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -149,7 +224,10 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
       <form onSubmit={handleSubmit}>
         {/* Word */}
         <div className="mb-6">
-          <label htmlFor="word" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="word"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Word *
           </label>
           <input
@@ -164,7 +242,10 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
 
         {/* Color */}
         <div className="mb-6">
-          <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="color"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Color
           </label>
           <div className="flex items-center gap-3">
@@ -187,7 +268,10 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
 
         {/* Order */}
         <div className="mb-6">
-          <label htmlFor="order" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="order"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Order
           </label>
           <input
@@ -202,7 +286,9 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
 
         {/* Is Active */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Status
+          </label>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -231,7 +317,9 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
 
         {/* Image Icon */}
         <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Image / Icon (Optional)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Image / Icon (Optional)
+          </label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
             <div className="space-y-1 text-center">
               {imagePreview ? (
@@ -264,11 +352,15 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
         </div>
         {/* Speak Audio */}
         <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Speak / Audio (Optional)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Speak / Audio (Optional)
+          </label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
             <div className="space-y-1 text-center">
               {speak ? (
-                <p className="text-sm text-green-600 font-medium">✓ {speak.name}</p>
+                <p className="text-sm text-green-600 font-medium">
+                  ✓ {speak.name}
+                </p>
               ) : (
                 <AudioIcon />
               )}
@@ -340,16 +432,18 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
       if (currentlyPlaying && audioRefs[currentlyPlaying]) {
         audioRefs[currentlyPlaying].pause();
       }
-      
+
       // Play new audio
       if (!audioRefs[id]) {
         const audio = new Audio(audioUrl);
-        audio.addEventListener('ended', () => setCurrentlyPlaying(null));
+        audio.addEventListener("ended", () => setCurrentlyPlaying(null));
         audioRefs[id] = audio;
-        setAudioRefs({...audioRefs, [id]: audio});
+        setAudioRefs({ ...audioRefs, [id]: audio });
       }
-      
-      audioRefs[id].play().catch(e => console.error('Error playing audio:', e));
+
+      audioRefs[id]
+        .play()
+        .catch((e) => console.error("Error playing audio:", e));
       setCurrentlyPlaying(id);
     }
   };
@@ -358,7 +452,7 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const currentItems = filtered.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   return (
@@ -376,8 +470,18 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
             }}
             className="outline-none w-64 text-sm text-gray-700 placeholder-gray-500"
           />
-          <svg className="w-5 h-5 text-gray-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            className="w-5 h-5 text-gray-500 ml-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </div>
       </div>
@@ -386,13 +490,27 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left p-4 font-semibold text-gray-600">Word</th>
-              <th className="text-center p-4 font-semibold text-gray-600">Color</th>
-              <th className="text-center p-4 font-semibold text-gray-600">Image</th>
-              <th className="text-center p-4 font-semibold text-gray-600">Audio</th>
-              <th className="text-center p-4 font-semibold text-gray-600">Order</th>
-              <th className="text-center p-4 font-semibold text-gray-600">Status</th>
-              <th className="text-center p-4 font-semibold text-gray-600">Actions</th>
+              <th className="text-left p-4 font-semibold text-gray-600">
+                Word
+              </th>
+              <th className="text-center p-4 font-semibold text-gray-600">
+                Color
+              </th>
+              <th className="text-center p-4 font-semibold text-gray-600">
+                Image
+              </th>
+              <th className="text-center p-4 font-semibold text-gray-600">
+                Audio
+              </th>
+              <th className="text-center p-4 font-semibold text-gray-600">
+                Order
+              </th>
+              <th className="text-center p-4 font-semibold text-gray-600">
+                Status
+              </th>
+              <th className="text-center p-4 font-semibold text-gray-600">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -400,7 +518,7 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
               <tr>
                 <td colSpan="7" className="p-8 text-center">
                   <div className="flex justify-center">
-                    <LoadingSpinner /> 
+                    <LoadingSpinner />
                   </div>
                 </td>
               </tr>
@@ -408,10 +526,15 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
               currentItems.map((qs) => {
                 const fmt = formatQuickSpeak(qs);
                 const isPlaying = currentlyPlaying === qs.id;
-                
+
                 return (
-                  <tr key={qs.id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4 text-left text-gray-800 font-medium">{fmt.formattedWord}</td>
+                  <tr
+                    key={qs.id}
+                    className="border-b hover:bg-gray-50 transition"
+                  >
+                    <td className="p-4 text-left text-gray-800 font-medium">
+                      {fmt.formattedWord}
+                    </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center">
                         <div
@@ -427,7 +550,8 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
                           alt={fmt.formattedWord}
                           className="h-10 w-10 mx-auto object-cover rounded-md"
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/40x40?text=Error";
+                            e.target.src =
+                              "https://via.placeholder.com/40x40?text=Error";
                           }}
                         />
                       ) : (
@@ -440,11 +564,11 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
                           <button
                             onClick={() => toggleAudio(qs.id, qs.speak)}
                             className={`p-2 rounded-full transition-colors ${
-                              isPlaying 
-                                ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                                : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                              isPlaying
+                                ? "bg-red-100 text-red-600 hover:bg-red-200"
+                                : "bg-blue-100 text-blue-600 hover:bg-blue-200"
                             }`}
-                            title={isPlaying ? 'Pause' : 'Play'}
+                            title={isPlaying ? "Pause" : "Play"}
                           >
                             {isPlaying ? <PauseIcon /> : <PlayIcon />}
                           </button>
@@ -512,7 +636,9 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
               className={`relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ${
-                currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-900 hover:bg-gray-50"
+                currentPage === 1
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-900 hover:bg-gray-50"
               }`}
             >
               Previous
@@ -536,7 +662,9 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
               className={`relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ${
-                currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-900 hover:bg-gray-50"
+                currentPage === totalPages
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-900 hover:bg-gray-50"
               }`}
             >
               Next
@@ -583,8 +711,22 @@ export default function QuickSpeak() {
   };
 
   // ---- Add ----
-  const handleAdd = async ({ word, color, order, isActive, imageIcon, speak }) => {
-    const response = await createQuickSpeak(word, color, order, isActive, imageIcon, speak);
+  const handleAdd = async ({
+    word,
+    color,
+    order,
+    isActive,
+    imageIcon,
+    speak,
+  }) => {
+    const response = await createQuickSpeak(
+      word,
+      color,
+      order,
+      isActive,
+      imageIcon,
+      speak,
+    );
     if (response.success) {
       setQuickSpeaks([response.data, ...quickSpeaks]);
       setCurrentPage("list");
@@ -594,7 +736,14 @@ export default function QuickSpeak() {
   };
 
   // ---- Update ----
-  const handleUpdate = async ({ word, color, order, isActive, imageIcon, speak }) => {
+  const handleUpdate = async ({
+    word,
+    color,
+    order,
+    isActive,
+    imageIcon,
+    speak,
+  }) => {
     const response = await updateQuickSpeak(
       editingItem.id,
       word,
@@ -602,11 +751,13 @@ export default function QuickSpeak() {
       order,
       isActive,
       imageIcon,
-      speak
+      speak,
     );
     if (response.success) {
       setQuickSpeaks(
-        quickSpeaks.map((qs) => (qs.id === response.data.id ? response.data : qs))
+        quickSpeaks.map((qs) =>
+          qs.id === response.data.id ? response.data : qs,
+        ),
       );
       setCurrentPage("list");
       setEditingItem(null);
@@ -680,8 +831,12 @@ export default function QuickSpeak() {
         {/* Header */}
         <header className="w-full flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quick Speak Management</h1>
-            <p className="text-gray-600 mt-1">Create, edit, and manage quick speak buttons</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Quick Speak Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Create, edit, and manage quick speak buttons
+            </p>
           </div>
           {currentPage === "list" && (
             <button

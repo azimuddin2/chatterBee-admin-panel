@@ -34,7 +34,9 @@ export const transformRecentUsersForDisplay = (recentUsers) => {
   return recentUsers.map((user) => ({
     id: user.id,
     name: user.full_name || user.username || "Unknown User",
-    avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username || 'U')}&background=EFEFEF&color=333`,
+    avatar:
+      user.avatar ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username || "U")}&background=EFEFEF&color=333`,
     email: user.email,
     role: user.role || "User",
     subscription_status: user.subscription_status || "free",

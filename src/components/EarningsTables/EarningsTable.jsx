@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from "next/navigation"; // Import useRouter
 
 // Dummy data for weekly and monthly
 const dummyWeeklyData = Array.from({ length: 90 }).map((_, i) => ({
@@ -75,13 +75,13 @@ export default function EarningsTable() {
       item.userName.toLowerCase().includes(search.toLowerCase()) ||
       item.serial.toLowerCase().includes(search.toLowerCase()) ||
       item.accNumber.toLowerCase().includes(search.toLowerCase()) || // Include accNumber in search
-      item.date.toLowerCase().includes(search.toLowerCase()) // Include date in search
+      item.date.toLowerCase().includes(search.toLowerCase()), // Include date in search
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const handlePageChange = (page) => {
@@ -248,7 +248,9 @@ export default function EarningsTable() {
                   <td className="py-2 px-4">{item.date}</td>
                   <td className="py-2 px-4">
                     {/* Changed onClick to navigate */}
-                    <button onClick={() => viewTransactionDetails(item.transactionID)}>
+                    <button
+                      onClick={() => viewTransactionDetails(item.transactionID)}
+                    >
                       <Image
                         src="/icon/eye.svg" // Ensure you have this image in public/icon
                         alt="action"

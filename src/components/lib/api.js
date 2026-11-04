@@ -25,7 +25,8 @@ export const API_ENDPOINTS = {
   // ============================================
   USER_MANAGEMENT: {
     GET_ALL_USERS: `${API_BASE_URL}/api/dashboard/admin/users/`,
-    GET_USER_DETAILS: (userId) => `${API_BASE_URL}/api/dashboard/admin/users/${userId}/`,
+    GET_USER_DETAILS: (userId) =>
+      `${API_BASE_URL}/api/dashboard/admin/users/${userId}/`,
     BLOCK_USER: `${API_BASE_URL}/api/dashboard/admin/users/block/`,
     UNBLOCK_USER: `${API_BASE_URL}/api/dashboard/admin/users/unblock/`,
     DELETE_USER: `${API_BASE_URL}/api/dashboard/admin/users/delete/`,
@@ -45,7 +46,8 @@ export const API_ENDPOINTS = {
   // ============================================
   SUBSCRIPTION: {
     GET_ALL_SUBSCRIPTIONS: `${API_BASE_URL}/api/dashboard/admin/subscriptions/`,
-    GET_SUBSCRIPTION_DETAILS: (subscriptionId) => `${API_BASE_URL}/api/dashboard/admin/subscriptions/${subscriptionId}/`,
+    GET_SUBSCRIPTION_DETAILS: (subscriptionId) =>
+      `${API_BASE_URL}/api/dashboard/admin/subscriptions/${subscriptionId}/`,
   },
 
   // ============================================
@@ -62,9 +64,12 @@ export const API_ENDPOINTS = {
   CATEGORIES: {
     GET_ALL_ROOT_CATEGORIES: `${API_BASE_URL}/api/dashboard/admin/categories/`,
     CREATE_ROOT_CATEGORY: `${API_BASE_URL}/api/dashboard/admin/categories/`,
-    GET_SINGLE_CATEGORY: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
-    UPDATE_CATEGORY: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
-    DELETE_CATEGORY: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
+    GET_SINGLE_CATEGORY: (categoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
+    UPDATE_CATEGORY: (categoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
+    DELETE_CATEGORY: (categoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
   },
 
   // ============================================
@@ -74,11 +79,16 @@ export const API_ENDPOINTS = {
     // GET all sub-categories across every main category, flat + paginated
     // Response: { data: { total_count, total_pages, page, page_size, sub_categories: [...] } }
     GET_ALL: `${API_BASE_URL}/api/dashboard/admin/subcategories`,
-    GET_BY_PARENT: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/subcategories/`,
-    CREATE: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/subcategories/`,
-    GET_SINGLE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
-    UPDATE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
-    DELETE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
+    GET_BY_PARENT: (categoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/subcategories/`,
+    CREATE: (categoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/subcategories/`,
+    GET_SINGLE: (subCategoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
+    UPDATE: (subCategoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
+    DELETE: (subCategoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
   },
   // ============================================
   // Category Items / Buttons Endpoints
@@ -87,9 +97,12 @@ export const API_ENDPOINTS = {
     // GET all items across every sub-category, flat + paginated
     // Response: { data: { total_count, total_pages, page, page_size, items: [...] } }
     GET_ALL: `${API_BASE_URL}/api/dashboard/admin/items/`,
-    GET_BY_SUB_CATEGORY: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/items/`,
-    CREATE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/items/`,
-    GET_SINGLE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
+    GET_BY_SUB_CATEGORY: (subCategoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/items/`,
+    CREATE: (subCategoryId) =>
+      `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/items/`,
+    GET_SINGLE: (itemId) =>
+      `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
     UPDATE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
     DELETE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
   },
@@ -100,7 +113,8 @@ export const API_ENDPOINTS = {
   QUICK_SPEAKS: {
     GET_ALL: `${API_BASE_URL}/api/dashboard/admin/quickspeaks/`,
     CREATE: `${API_BASE_URL}/api/dashboard/admin/quickspeaks/`,
-    GET_SINGLE: (id) => `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
+    GET_SINGLE: (id) =>
+      `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
     UPDATE: (id) => `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
     DELETE: (id) => `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
   },
@@ -110,8 +124,10 @@ export const API_ENDPOINTS = {
   // ============================================
   EVENTS: {
     GET_PROPOSALS: `${API_BASE_URL}/api/shopadmin/admin/events/proposals/`,
-    GET_DETAILS: (eventId) => `${API_BASE_URL}/api/shopadmin/admin/events/${eventId}/`,
-    APPROVE_REJECT: (eventId) => `${API_BASE_URL}/api/shopadmin/admin/events/${eventId}/approve-reject/`,
+    GET_DETAILS: (eventId) =>
+      `${API_BASE_URL}/api/shopadmin/admin/events/${eventId}/`,
+    APPROVE_REJECT: (eventId) =>
+      `${API_BASE_URL}/api/shopadmin/admin/events/${eventId}/approve-reject/`,
   },
 
   // ============================================

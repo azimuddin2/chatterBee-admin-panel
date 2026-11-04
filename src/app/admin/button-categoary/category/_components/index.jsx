@@ -5,11 +5,7 @@ import {
   getAllRootCategories,
 } from "@/components/lib/categoryApiClient";
 
-import React, {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import toast from "react-hot-toast";
 
@@ -100,7 +96,7 @@ export default function CategoryManagement() {
           totalPages: 0,
           currentPage,
           pageSize,
-        }
+        },
       );
     } catch (err) {
       console.error("Fetch categories error:", err);
@@ -156,7 +152,7 @@ export default function CategoryManagement() {
 
   const handleDeleteCategory = async (categoryId, categoryName) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${categoryName}"?`
+      `Are you sure you want to delete "${categoryName}"?`,
     );
     if (!confirmed) return;
 
@@ -249,12 +245,9 @@ export default function CategoryManagement() {
 
   return (
     <div className="w-full min-h-screen font-sans p-4 sm:p-6 lg:p-8 bg-gray-50">
-
       <div className="mx-auto">
-
         {/* Header */}
         <header className="w-full flex justify-between items-center mb-8">
-
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Category Management
@@ -274,7 +267,6 @@ export default function CategoryManagement() {
               Add Category
             </button>
           )}
-
         </header>
 
         {/* Error */}
@@ -291,10 +283,7 @@ export default function CategoryManagement() {
         )}
 
         {/* Content */}
-        <main className="w-full">
-          {renderContent()}
-        </main>
-
+        <main className="w-full">{renderContent()}</main>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import Link from "next/link";
 import React, { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-
 // SVG Icons (unchanged)
 const MailIcon = () => (
   <svg
@@ -48,14 +47,7 @@ const EyeIcon = ({ show }) => (
       strokeWidth="1.5"
     />
     {!show && (
-      <line
-        x1="3"
-        y1="18"
-        x2="17"
-        y2="3"
-        stroke="#211F2F"
-        strokeWidth="1.5"
-      />
+      <line x1="3" y1="18" x2="17" y2="3" stroke="#211F2F" strokeWidth="1.5" />
     )}
     {show && (
       <path
@@ -121,7 +113,8 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("Login error:", err);
-      const errorMessage = err.message || "An unexpected error occurred. Please try again.";
+      const errorMessage =
+        err.message || "An unexpected error occurred. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -270,7 +263,10 @@ export default function LoginPage() {
 
             <p className="text-center text-slate-500 text-base font-normal font-['Nunito']">
               Don't have an account?{" "}
-              <Link href="/register" className="font-bold text-yellow-500 hover:underline">
+              <Link
+                href="/register"
+                className="font-bold text-yellow-500 hover:underline"
+              >
                 Sign Up
               </Link>
             </p>

@@ -28,7 +28,7 @@ export const getAllSubscriptions = async () => {
   try {
     const response = await apiCall(
       API_ENDPOINTS.SUBSCRIPTION.GET_ALL_SUBSCRIPTIONS,
-      "GET"
+      "GET",
     );
     return response;
   } catch (error) {
@@ -44,7 +44,8 @@ export const getAllSubscriptions = async () => {
  */
 export const getSubscriptionById = async (subscriptionId) => {
   try {
-    const endpoint = API_ENDPOINTS.SUBSCRIPTION.GET_SUBSCRIPTION_DETAILS(subscriptionId);
+    const endpoint =
+      API_ENDPOINTS.SUBSCRIPTION.GET_SUBSCRIPTION_DETAILS(subscriptionId);
     const response = await apiCall(endpoint, "GET");
     return response;
   } catch (error) {

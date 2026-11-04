@@ -31,9 +31,9 @@ export const transformUserGrowthData = (userGrowthData) => {
     return [];
   }
 
-  return userGrowthData.map(item => ({
+  return userGrowthData.map((item) => ({
     name: item.month.substring(0, 3), // "February" -> "Feb"
-    value: item.count
+    value: item.count,
   }));
 };
 
@@ -47,8 +47,8 @@ export const transformRevenueData = (revenueData) => {
     return [];
   }
 
-  return revenueData.map(item => ({
+  return revenueData.map((item) => ({
     name: item.month.substring(0, 3), // "February" -> "Feb"
-    value: parseFloat(item.amount)
+    value: parseFloat(item.amount),
   }));
 };

@@ -1,11 +1,11 @@
-import CategoryManagement from "./_components"
+import CategoryManagement from "./_components";
 
 const page = () => {
   return (
     <div>
-     <CategoryManagement/>
+      <CategoryManagement />
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;

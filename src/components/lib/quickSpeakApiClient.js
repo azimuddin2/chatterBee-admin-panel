@@ -99,7 +99,14 @@ export const getSingleQuickSpeak = async (id) => {
 // POST /api/dashboard/admin/quickspeaks/
 // Body: form-data { word, color, order, is_active, image_icon (File), speak (File) }
 // ============================================
-export const createQuickSpeak = async (word, color, order, isActive, imageIcon, speak) => {
+export const createQuickSpeak = async (
+  word,
+  color,
+  order,
+  isActive,
+  imageIcon,
+  speak,
+) => {
   try {
     const formData = new FormData();
     formData.append("word", word);
@@ -152,7 +159,15 @@ export const createQuickSpeak = async (word, color, order, isActive, imageIcon, 
 // PUT /api/dashboard/admin/quickspeaks/{id}/
 // Body: form-data { word, color, order, is_active, image_icon (File), speak (File) }
 // ============================================
-export const updateQuickSpeak = async (id, word, color, order, isActive, imageIcon, speak) => {
+export const updateQuickSpeak = async (
+  id,
+  word,
+  color,
+  order,
+  isActive,
+  imageIcon,
+  speak,
+) => {
   try {
     const formData = new FormData();
     formData.append("word", word);
@@ -256,7 +271,7 @@ export const searchQuickSpeaks = (quickSpeaks, query) => {
   return quickSpeaks.filter(
     (qs) =>
       qs.word?.toLowerCase().includes(lower) ||
-      qs.color?.toLowerCase().includes(lower)
+      qs.color?.toLowerCase().includes(lower),
   );
 };
 

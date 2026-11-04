@@ -1,12 +1,12 @@
-import QuickSpeak from '@/components/QuickSpeak/QuickSpeak'
-import React from 'react'
+import QuickSpeak from "@/components/QuickSpeak/QuickSpeak";
+import React from "react";
 
 const page = () => {
   return (
     <div>
-          <QuickSpeak />
+      <QuickSpeak />
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;

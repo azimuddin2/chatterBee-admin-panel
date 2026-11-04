@@ -6,11 +6,7 @@ import {
 } from "@/components/lib/categoryItemsApiClient";
 import { getAllSubCategories } from "@/components/lib/subCategoriesApiClient";
 
-import React, {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import toast, { Toaster } from "react-hot-toast";
 
@@ -71,7 +67,9 @@ export default function AllItemsManage() {
       });
       setSubCategoryMap(map);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ─────────────────────────────────────────────
@@ -100,7 +98,7 @@ export default function AllItemsManage() {
           totalPages: 0,
           currentPage,
           pageSize,
-        }
+        },
       );
     } catch (err) {
       console.error("Fetch items error:", err);
@@ -136,28 +134,45 @@ export default function AllItemsManage() {
   // ─────────────────────────────────────────────
 
   const handleDelete = (itemId, itemWord) => {
-    toast((t) => (
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold text-gray-800">Delete <strong>"{itemWord}"</strong>?</p>
-        <div className="flex justify-end gap-2">
-          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold">Cancel</button>
-          <button onClick={async () => {
-            const res = await deleteItem(itemId);
-            toast.dismiss(t.id);
-            res.success ? toast.success('Deleted') : toast.error(res.message);
-            if (res.success) {
-              // If we deleted the last item on this page (and it's not page 1),
-              // step back a page so we don't land on an empty page.
-              if (allItems.length === 1 && currentPage > 1) {
-                setCurrentPage((p) => p - 1);
-              } else {
-                fetchAllData();
-              }
-            }
-          }} className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold">Delete</button>
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-gray-800">
+            Delete <strong>"{itemWord}"</strong>?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                const res = await deleteItem(itemId);
+                toast.dismiss(t.id);
+                res.success
+                  ? toast.success("Deleted")
+                  : toast.error(res.message);
+                if (res.success) {
+                  // If we deleted the last item on this page (and it's not page 1),
+                  // step back a page so we don't land on an empty page.
+                  if (allItems.length === 1 && currentPage > 1) {
+                    setCurrentPage((p) => p - 1);
+                  } else {
+                    fetchAllData();
+                  }
+                }
+              }}
+              className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
-    ), { duration: 6000, style: { minWidth: '280px' } });
+      ),
+      { duration: 6000, style: { minWidth: "280px" } },
+    );
   };
 
   // ─────────────────────────────────────────────
@@ -232,12 +247,18 @@ export default function AllItemsManage() {
       <div className="mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Items Management</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{pagination.totalCount} items across all sub-categories</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Items Management
+            </h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {pagination.totalCount} items across all sub-categories
+            </p>
           </div>
           {view === "list" && (
-            <button onClick={() => setView("add")}
-              className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm">
+            <button
+              onClick={() => setView("add")}
+              className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm"
+            >
               <PlusIcon /> Add Item
             </button>
           )}
@@ -246,7 +267,12 @@ export default function AllItemsManage() {
         {error && view === "list" && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {error}
-            <button onClick={fetchAllData} className="ml-4 text-red-700 font-semibold hover:underline">Retry</button>
+            <button
+              onClick={fetchAllData}
+              className="ml-4 text-red-700 font-semibold hover:underline"
+            >
+              Retry
+            </button>
           </div>
         )}
 

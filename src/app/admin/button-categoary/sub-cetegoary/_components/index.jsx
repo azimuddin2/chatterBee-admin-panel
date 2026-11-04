@@ -5,11 +5,7 @@ import {
   getAllSubCategories,
 } from "@/components/lib/subCategoriesApiClient";
 
-import React, {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import toast, { Toaster } from "react-hot-toast";
 
@@ -75,7 +71,7 @@ export default function SubCategoryManagement() {
           totalPages: 0,
           currentPage,
           pageSize,
-        }
+        },
       );
     } catch (err) {
       console.error("Fetch sub-categories error:", err);
@@ -107,27 +103,46 @@ export default function SubCategoryManagement() {
   // ─────────────────────────────────────────────
 
   const handleDeleteSubCategory = (subCategoryId, subCategoryName) => {
-    toast((t) => (
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold text-gray-800">Delete <strong>"{subCategoryName}"</strong>?</p>
-        <p className="text-xs text-gray-400">Items inside it may need to be moved first.</p>
-        <div className="flex justify-end gap-2">
-          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold">Cancel</button>
-          <button onClick={async () => {
-            const res = await deleteSubCategory(subCategoryId);
-            toast.dismiss(t.id);
-            res.success ? toast.success('Deleted') : toast.error(res.message);
-            if (res.success) {
-              if (allSubCategories.length === 1 && currentPage > 1) {
-                setCurrentPage((p) => p - 1);
-              } else {
-                fetchAllData();
-              }
-            }
-          }} className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold">Delete</button>
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-gray-800">
+            Delete <strong>"{subCategoryName}"</strong>?
+          </p>
+          <p className="text-xs text-gray-400">
+            Items inside it may need to be moved first.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                const res = await deleteSubCategory(subCategoryId);
+                toast.dismiss(t.id);
+                res.success
+                  ? toast.success("Deleted")
+                  : toast.error(res.message);
+                if (res.success) {
+                  if (allSubCategories.length === 1 && currentPage > 1) {
+                    setCurrentPage((p) => p - 1);
+                  } else {
+                    fetchAllData();
+                  }
+                }
+              }}
+              className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
-    ), { duration: 6000, style: { minWidth: '280px' } });
+      ),
+      { duration: 6000, style: { minWidth: "280px" } },
+    );
   };
 
   // ─────────────────────────────────────────────
@@ -162,7 +177,9 @@ export default function SubCategoryManagement() {
   const renderContent = () => {
     switch (view) {
       case "add":
-        return <AddSubCategoary onDone={handleAddDone} onCancel={handleCancel} />;
+        return (
+          <AddSubCategoary onDone={handleAddDone} onCancel={handleCancel} />
+        );
       case "edit":
         return (
           <EditSubCategoary
@@ -197,12 +214,18 @@ export default function SubCategoryManagement() {
       <div className="mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Sub-Category Management</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{pagination.totalCount} sub-categories across all categories</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Sub-Category Management
+            </h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {pagination.totalCount} sub-categories across all categories
+            </p>
           </div>
           {view === "list" && (
-            <button onClick={() => setView("add")}
-              className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm">
+            <button
+              onClick={() => setView("add")}
+              className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm"
+            >
               <PlusIcon /> Add Sub-Category
             </button>
           )}
@@ -211,7 +234,12 @@ export default function SubCategoryManagement() {
         {error && view === "list" && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {error}
-            <button onClick={fetchAllData} className="ml-4 text-red-700 font-semibold hover:underline">Retry</button>
+            <button
+              onClick={fetchAllData}
+              className="ml-4 text-red-700 font-semibold hover:underline"
+            >
+              Retry
+            </button>
           </div>
         )}
 

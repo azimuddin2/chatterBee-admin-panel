@@ -6,7 +6,6 @@
 import { API_ENDPOINTS } from "./api";
 import { apiCall } from "./apiClient";
 
-
 /**
  * Get all users with optional filters
  * @param {Object} filters - Filter parameters (role, is_active, page, page_size)
@@ -15,11 +14,11 @@ import { apiCall } from "./apiClient";
 export const getAllUsers = async (filters = {}) => {
   try {
     let endpoint = API_ENDPOINTS.USER_MANAGEMENT.GET_ALL_USERS;
-    
+
     // Add query parameters if filters provided
     if (Object.keys(filters).length > 0) {
       const queryParams = new URLSearchParams();
-      Object.keys(filters).forEach(key => {
+      Object.keys(filters).forEach((key) => {
         if (filters[key] !== null && filters[key] !== undefined) {
           queryParams.append(key, filters[key]);
         }
@@ -34,7 +33,7 @@ export const getAllUsers = async (filters = {}) => {
     throw error;
   }
 };
-  
+
 /**
  * Get user details by ID
  * @param {number} userId - User ID
@@ -65,7 +64,7 @@ export const blockUser = async (email, reason = "") => {
       {
         email,
         reason: reason || "Violation of terms",
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -73,7 +72,7 @@ export const blockUser = async (email, reason = "") => {
     throw error;
   }
 };
-      
+
 /**
  * Unblock a user
  * @param {string} email - User email
@@ -86,7 +85,7 @@ export const unblockUser = async (email) => {
       "POST",
       {
         email,
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -107,7 +106,7 @@ export const deleteUser = async (email) => {
       "POST",
       {
         email,
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -128,7 +127,7 @@ export const restoreUser = async (email) => {
       "POST",
       {
         email,
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -153,7 +152,11 @@ export const transformUsersForDisplay = (users) => {
     avatar: user.profile?.avatar || `https://i.pravatar.cc/40?u=user${user.id}`,
     role: user.profile?.role || user.role || "User",
     email: user.email,
-    status: user.is_blocked ? "Blocked" : user.is_active ? "Active" : "Inactive",
+    status: user.is_blocked
+      ? "Blocked"
+      : user.is_active
+        ? "Active"
+        : "Inactive",
     phone: user.profile?.phone || "(N/A)",
     is_active: user.is_active,
     is_blocked: user.is_blocked,

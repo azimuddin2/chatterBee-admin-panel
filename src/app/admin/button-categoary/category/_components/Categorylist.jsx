@@ -83,45 +83,30 @@ const CategoryList = ({
   totalCount = 0,
   onPageChange,
 }) => {
-  const [searchQuery, setSearchQuery] =
-    useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Search current API page
-  const filteredCategories =
-    searchCategories(
-      categories,
-      searchQuery
-    );
+  const filteredCategories = searchCategories(categories, searchQuery);
 
   return (
     <div className="p-8 rounded-xl shadow-lg w-full bg-white">
-
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            Category List
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800">Category List</h2>
 
           <p className="text-sm text-gray-500 mt-1">
-            Total Categories:{" "}
-            {totalCount}
+            Total Categories: {totalCount}
           </p>
         </div>
 
         {/* Search */}
         <div className="flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2">
-
           <input
             type="text"
             placeholder="Search categories..."
             value={searchQuery}
-            onChange={(e) =>
-              setSearchQuery(
-                e.target.value
-              )
-            }
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="outline-none w-64 text-sm text-gray-700 placeholder-gray-500"
           />
 
@@ -138,19 +123,14 @@ const CategoryList = ({
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
-
         </div>
-
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto border rounded-lg">
-
         <table className="w-full text-sm">
-
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-
               <th className="text-left p-4 font-semibold text-gray-600">
                 Category Name
               </th>
@@ -182,321 +162,210 @@ const CategoryList = ({
               <th className="text-center p-4 font-semibold text-gray-600">
                 Actions
               </th>
-
             </tr>
           </thead>
 
           <tbody>
-
             {loading ? (
-
               <tr>
-                <td
-                  colSpan="8"
-                  className="p-8 text-center"
-                >
+                <td colSpan="8" className="p-8 text-center">
                   <div className="flex justify-center">
                     <LoadingSpinner />
                   </div>
                 </td>
               </tr>
-
             ) : filteredCategories.length > 0 ? (
+              filteredCategories.map((category) => {
+                const langs = Object.keys(category.translations || {});
 
-              filteredCategories.map(
-                (category) => {
+                const displayLang = langs[0] || "en";
 
-                  const langs =
-                    Object.keys(
-                      category.translations ||
-                      {}
-                    );
+                const formatted = formatCategory(category, displayLang);
 
-                  const displayLang =
-                    langs[0] || "en";
+                return (
+                  <tr
+                    key={category.id}
+                    className="border-b hover:bg-gray-50 transition"
+                  >
+                    {/* Name */}
+                    <td className="p-4 text-left text-gray-800 font-medium">
+                      {formatted.formattedName}
+                    </td>
 
-                  const formatted =
-                    formatCategory(
-                      category,
-                      displayLang
-                    );
-
-                  return (
-                    <tr
-                      key={category.id}
-                      className="border-b hover:bg-gray-50 transition"
-                    >
-
-                      {/* Name */}
-                      <td className="p-4 text-left text-gray-800 font-medium">
-                        {
-                          formatted.formattedName
-                        }
-                      </td>
-
-                      {/* Language */}
-                      <td className="p-4 text-center">
-
-                        <div className="flex gap-1 flex-wrap justify-center">
-
-                          {langs.map(
-                            (lang) => (
-                              <span
-                                key={lang}
-                                className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase"
-                              >
-                                {lang}
-                              </span>
-                            )
-                          )}
-
-                        </div>
-
-                      </td>
-
-                      {/* Color */}
-                      <td className="p-4 text-center">
-
-                        <div className="flex justify-center">
-
-                          <div
-                            className="h-8 w-8 rounded-full border-2 border-gray-300"
-                            style={{
-                              backgroundColor:
-                                formatted.displayColor,
-                            }}
-                          />
-
-                        </div>
-
-                      </td>
-
-                      {/* Image */}
-                      <td className="p-4 text-center">
-
-                        {formatted.hasImage ? (
-
-                          <img
-                            src={
-                              category.image_icon
-                            }
-                            alt={
-                              formatted.formattedName
-                            }
-                            className="h-10 w-10 mx-auto object-cover rounded-md"
-                            onError={(e) => {
-                              e.currentTarget.style.display =
-                                "none";
-                            }}
-                          />
-
-                        ) : (
-
-                          <span className="text-gray-400 text-xs">
-                            No image
-                          </span>
-
-                        )}
-
-                      </td>
-
-                      {/* Sub Categories */}
-                      <td className="p-4 text-center text-gray-700 font-medium">
-                        {
-                          category.sub_categories_count ||
-                          0
-                        }
-                      </td>
-
-                      {/* Buddy Mode */}
-                      <td className="p-4 text-center">
-
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${category.buddy_mode
-                              ? "bg-amber-100 text-amber-700 border border-amber-200"
-                              : "bg-gray-100 text-gray-500 border border-gray-200"
-                            }`}
-                        >
-
+                    {/* Language */}
+                    <td className="p-4 text-center">
+                      <div className="flex gap-1 flex-wrap justify-center">
+                        {langs.map((lang) => (
                           <span
-                            className={`h-1.5 w-1.5 rounded-full ${category.buddy_mode
-                                ? "bg-amber-500"
-                                : "bg-gray-400"
-                              }`}
-                          />
+                            key={lang}
+                            className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase"
+                          >
+                            {lang}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
 
-                          {category.buddy_mode
-                            ? "ON"
-                            : "OFF"}
+                    {/* Color */}
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center">
+                        <div
+                          className="h-8 w-8 rounded-full border-2 border-gray-300"
+                          style={{
+                            backgroundColor: formatted.displayColor,
+                          }}
+                        />
+                      </div>
+                    </td>
 
-                        </span>
+                    {/* Image */}
+                    <td className="p-4 text-center">
+                      {formatted.hasImage ? (
+                        <img
+                          src={category.image_icon}
+                          alt={formatted.formattedName}
+                          className="h-10 w-10 mx-auto object-cover rounded-md"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-xs">No image</span>
+                      )}
+                    </td>
 
-                      </td>
+                    {/* Sub Categories */}
+                    <td className="p-4 text-center text-gray-700 font-medium">
+                      {category.sub_categories_count || 0}
+                    </td>
 
-                      {/* Status */}
-                      <td className="p-4 text-center">
-
+                    {/* Buddy Mode */}
+                    <td className="p-4 text-center">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                          category.buddy_mode
+                            ? "bg-amber-100 text-amber-700 border border-amber-200"
+                            : "bg-gray-100 text-gray-500 border border-gray-200"
+                        }`}
+                      >
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${category.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-700"
-                            }`}
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            category.buddy_mode ? "bg-amber-500" : "bg-gray-400"
+                          }`}
+                        />
+
+                        {category.buddy_mode ? "ON" : "OFF"}
+                      </span>
+                    </td>
+
+                    {/* Status */}
+                    <td className="p-4 text-center">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          category.is_active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {formatted.statusBadge}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="p-4 text-center">
+                      <div className="flex gap-2 items-center justify-center">
+                        <button
+                          onClick={() => onEdit(category)}
+                          className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                          title="Edit"
                         >
-                          {
-                            formatted.statusBadge
+                          <EditIcon />
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            onDelete(category.id, formatted.formattedName)
                           }
-                        </span>
-
-                      </td>
-
-                      {/* Actions */}
-                      <td className="p-4 text-center">
-
-                        <div className="flex gap-2 items-center justify-center">
-
-                          <button
-                            onClick={() =>
-                              onEdit(category)
-                            }
-                            className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
-                            title="Edit"
-                          >
-                            <EditIcon />
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              onDelete(
-                                category.id,
-                                formatted.formattedName
-                              )
-                            }
-                            className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
-                            title="Delete"
-                          >
-                            <TrashIcon />
-                          </button>
-
-                        </div>
-
-                      </td>
-
-                    </tr>
-                  );
-                }
-              )
-
+                          className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+                          title="Delete"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
-
               <tr>
-                <td
-                  colSpan="8"
-                  className="p-8 text-center text-gray-500"
-                >
+                <td colSpan="8" className="p-8 text-center text-gray-500">
                   {searchQuery
                     ? `No categories found matching "${searchQuery}"`
                     : "No categories found. Add one to get started!"}
                 </td>
               </tr>
-
             )}
-
           </tbody>
-
         </table>
-
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-
         <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-4 mt-4">
-
           {/* Info */}
           <div className="text-sm text-gray-600">
-            Page{" "}
-            <span className="font-semibold">
-              {currentPage}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold">
-              {totalPages}
-            </span>
+            Page <span className="font-semibold">{currentPage}</span> of{" "}
+            <span className="font-semibold">{totalPages}</span>
           </div>
 
           {/* Buttons */}
           <div className="flex items-center gap-2">
-
             {/* Previous */}
             <button
-              onClick={() =>
-                onPageChange(
-                  currentPage - 1
-                )
-              }
-              disabled={
-                currentPage === 1 ||
-                loading
-              }
-              className={`px-4 py-2 text-sm font-semibold rounded-md ${currentPage === 1 ||
-                  loading
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+              className={`px-4 py-2 text-sm font-semibold rounded-md ${
+                currentPage === 1 || loading
                   ? "text-gray-400 bg-gray-100 cursor-not-allowed"
                   : "text-gray-900 hover:bg-gray-50"
-                }`}
+              }`}
             >
               Previous
             </button>
 
             {/* Page Numbers */}
-            {Array.from(
-              { length: totalPages },
-              (_, index) => index + 1
-            ).map((page) => (
-
-              <button
-                key={page}
-                onClick={() =>
-                  onPageChange(page)
-                }
-                disabled={loading}
-                className={`px-4 py-2 text-sm font-semibold rounded-md ${currentPage === page
-                    ? "bg-yellow-400 text-white"
-                    : "text-gray-900 hover:bg-gray-50"
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page)}
+                  disabled={loading}
+                  className={`px-4 py-2 text-sm font-semibold rounded-md ${
+                    currentPage === page
+                      ? "bg-yellow-400 text-white"
+                      : "text-gray-900 hover:bg-gray-50"
                   }`}
-              >
-                {page}
-              </button>
-
-            ))}
+                >
+                  {page}
+                </button>
+              ),
+            )}
 
             {/* Next */}
             <button
-              onClick={() =>
-                onPageChange(
-                  currentPage + 1
-                )
-              }
-              disabled={
-                currentPage ===
-                totalPages ||
-                loading
-              }
-              className={`px-4 py-2 text-sm font-semibold rounded-md ${currentPage ===
-                  totalPages ||
-                  loading
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+              className={`px-4 py-2 text-sm font-semibold rounded-md ${
+                currentPage === totalPages || loading
                   ? "text-gray-400 bg-gray-100 cursor-not-allowed"
                   : "text-gray-900 hover:bg-gray-50"
-                }`}
+              }`}
             >
               Next
             </button>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 };

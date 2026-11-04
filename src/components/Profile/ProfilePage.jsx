@@ -14,14 +14,13 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("editProfile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
- 
+
   const [profileData, setProfileData] = useState({
     full_name: "",
     email: "",
     phone: "",
     avatar: null,
-  }); 
+  });
   const [profileImage, setProfileImage] = useState("/image/userImage.png");
   const [avatarFile, setAvatarFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
@@ -32,22 +31,22 @@ export default function ProfilePage() {
       try {
         setIsLoading(true);
         const response = await getProfile();
-        
+
         console.log("Profile Response:", response); // Debug log
-        
+
         if (response.success && response.data) {
           const userData = response.data;
-          
+
           // Extract avatar URL from response
           const avatarUrl = userData.profile?.avatar || userData.avatar;
-          
+
           setProfileData({
             full_name: userData.full_name || "",
             email: userData.email || "",
             phone: userData.profile?.phone || "",
             avatar: avatarUrl || null,
           });
-          
+
           // Set profile image if available
           if (avatarUrl) {
             console.log("Setting avatar URL:", avatarUrl); // Debug log
@@ -55,7 +54,7 @@ export default function ProfilePage() {
           } else if (userData.full_name) {
             // Generate avatar with user initials if no image
             setProfileImage(
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.full_name)}&background=FDD268&color=000&size=128&bold=true`
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.full_name)}&background=FDD268&color=000&size=128&bold=true`,
             );
           }
         } else {
@@ -79,19 +78,19 @@ export default function ProfilePage() {
     const file = event.target.files[0];
     if (file) {
       // Validate file type
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      const validTypes = ["image/png", "image/jpeg", "image/jpg"];
       if (!validTypes.includes(file.type)) {
         toast.error("Please upload a valid image (PNG, JPG, JPEG)");
         return;
       }
-      
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Image size should be less than 5MB");
         return;
       }
       // Create preview URL
-      
+
       const previewUrl = URL.createObjectURL(file);
       setPreviewImage(previewUrl);
       setAvatarFile(file);
@@ -103,15 +102,15 @@ export default function ProfilePage() {
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!profileData.full_name.trim()) {
       toast.error("Full name is required");
@@ -122,13 +121,13 @@ export default function ProfilePage() {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append("full_name", profileData.full_name);
-      
+
       // Email is not included - backend should not allow email changes
       // Only send phone if it exists
       if (profileData.phone) {
-        formData.append("phone", profileData.phone); 
+        formData.append("phone", profileData.phone);
       }
-      
+
       // Only append avatar if a new file was selected
       if (avatarFile) {
         formData.append("avatar", avatarFile);
@@ -141,46 +140,48 @@ export default function ProfilePage() {
 
       if (response.success && response.data) {
         toast.success(response.message || "Profile updated successfully!");
-        
+
         // Update profile data with response
         const updatedData = response.data;
-        
+
         // Extract avatar URL - check multiple possible locations
         const updatedAvatar = updatedData.avatar || updatedData.profile?.avatar;
-        
+
         console.log("Updated Avatar URL:", updatedAvatar); // Debug log
-        
+
         setProfileData({
           full_name: updatedData.full_name || "",
           email: updatedData.email || "",
           phone: updatedData.profile?.phone || "",
           avatar: updatedAvatar || null,
         });
-        
+
         // Update profile image - CRITICAL FIX
         if (updatedAvatar) {
           // Force image reload by adding timestamp
           const timestamp = new Date().getTime();
           const imageUrlWithCache = `${updatedAvatar}?t=${timestamp}`;
-          
+
           console.log("Setting new profile image:", imageUrlWithCache); // Debug log
-          
+
           setProfileImage(imageUrlWithCache);
-          
+
           // Dispatch custom event to update Topbar
-          window.dispatchEvent(new CustomEvent('profileUpdated', { 
-            detail: { avatar: imageUrlWithCache } 
-          })); 
+          window.dispatchEvent(
+            new CustomEvent("profileUpdated", {
+              detail: { avatar: imageUrlWithCache },
+            }),
+          );
           // Clear preview after successful upload
           if (previewImage) {
             URL.revokeObjectURL(previewImage);
           }
           setPreviewImage(null);
           setAvatarFile(null);
-          
+
           // Reset file input
           if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+            fileInputRef.current.value = "";
           }
         } else {
           console.error("No avatar URL in response"); // Debug log
@@ -226,11 +227,14 @@ export default function ProfilePage() {
         onClick={handleBackClick}
       >
         <div className="">
-          <ArrowLeft className="text-black bg-[#E0E0E0] rounded-full p-2" size={40} />
+          <ArrowLeft
+            className="text-black bg-[#E0E0E0] rounded-full p-2"
+            size={40}
+          />
         </div>
         <h1 className="text-2xl font-bold">Profile</h1>
       </div>
-      
+
       <div className="w-full max-w-6xl mx-auto px-4">
         <div className="p-6">
           <div className="flex justify-center gap-[18px] items-center mb-6">
@@ -245,7 +249,7 @@ export default function ProfilePage() {
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error("Image load error, using fallback");
-                    e.target.src = '/image/userImage.png';
+                    e.target.src = "/image/userImage.png";
                   }}
                 />
               </div>
@@ -265,13 +269,13 @@ export default function ProfilePage() {
               </span>
             </div>
             <div className="flex flex-col gap-[12px]">
-              <h2 className="text-[24px] font-bold mt-3 text-black"> 
+              <h2 className="text-[24px] font-bold mt-3 text-black">
                 {profileData.full_name || "Loading..."}
               </h2>
               <p className="text-black font-[400] text-xl">Admin</p>
             </div>
           </div>
-          
+
           <div className="flex justify-center mb-6">
             <button
               className={`py-2 px-6 text-[16px] font-semibold ${
@@ -321,7 +325,7 @@ export default function ProfilePage() {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-4">
                   <label
                     htmlFor="email"
@@ -342,7 +346,7 @@ export default function ProfilePage() {
                     Email address cannot be changed
                   </p>
                 </div>
-                
+
                 <div className="mb-4">
                   <label
                     htmlFor="phone"
@@ -359,7 +363,7 @@ export default function ProfilePage() {
                     onChange={handleInputChange}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-center mt-6">
                   <button
                     type="submit"
@@ -372,7 +376,7 @@ export default function ProfilePage() {
               </form>
             </div>
           )}
-          
+
           {activeTab === "changePassword" && <ChangePasswordForm />}
         </div>
       </div>

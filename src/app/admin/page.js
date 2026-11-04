@@ -26,9 +26,8 @@ const Admin = () => {
   return (
     <>
       <div className="bg-white w-full min-h-screen">
-           <div className="">
-
-            <Dashboard />
+        <div className="">
+          <Dashboard />
           {/* <MetricCard
             title="Active User"
             value={1548}
@@ -55,16 +54,15 @@ const Admin = () => {
         <div className=" ">
           {/* Earning Summary Chart */}
           <div className="w-full">
-      
             {/* Ensure minimum height for chart visibility */}
             <EarningSummaryChart />
           </div>
 
           {/* Alcohol Consumption Trend Line Chart */}
           {/* <div className="min-h-[340px]"> */}
-           
-            {/* Ensure minimum height for chart visibility */}
-            {/* <AlcoholConsumptionTrendChart /> */}
+
+          {/* Ensure minimum height for chart visibility */}
+          {/* <AlcoholConsumptionTrendChart /> */}
           {/* </div> */}
         </div>
 

@@ -5,7 +5,7 @@
 
 import { API_ENDPOINTS } from "./api";
 
-// Helper function to get token from cookie  
+// Helper function to get token from cookie
 const getTokenFromCookie = () => {
   if (typeof document === "undefined") return null;
   const name = "token=";
@@ -45,7 +45,7 @@ export const apiCall = async (
   endpoint,
   method = "POST",
   data = null,
-  headers = {}
+  headers = {},
 ) => {
   try {
     const token = getTokenFromCookie();
@@ -141,7 +141,11 @@ export const resetPassword = async (email, otp, newPassword, newPassword2) => {
 /**
  * Change Password (Requires Authentication)
  */
-export const changePassword = async (oldPassword, newPassword, newPassword2) => {
+export const changePassword = async (
+  oldPassword,
+  newPassword,
+  newPassword2,
+) => {
   return apiCall(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, "POST", {
     old_password: oldPassword,
     new_password: newPassword,

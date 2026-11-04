@@ -9,10 +9,11 @@ import { API_ENDPOINTS } from "./api";
  * Get user profile data
  */
 export const getProfile = async () => {
-  const token = typeof document !== "undefined" 
-    ? document.cookie.split('token=')[1]?.split(';')[0] 
-    : null;
-  
+  const token =
+    typeof document !== "undefined"
+      ? document.cookie.split("token=")[1]?.split(";")[0]
+      : null;
+
   if (!token) {
     throw new Error("No authentication token found");
   }
@@ -21,9 +22,9 @@ export const getProfile = async () => {
     const response = await fetch(API_ENDPOINTS.USER_PROFILE.GET, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
 
     const data = await response.json();
@@ -34,13 +35,13 @@ export const getProfile = async () => {
 
     return {
       success: true,
-      data: data.data || data
+      data: data.data || data,
     };
   } catch (error) {
     console.error("Error fetching profile:", error);
     return {
       success: false,
-      message: error.message || "Failed to fetch profile"
+      message: error.message || "Failed to fetch profile",
     };
   }
 };
@@ -50,10 +51,11 @@ export const getProfile = async () => {
  * @param {FormData} formData - Form data with profile fields and optional avatar file
  */
 export const updateProfile = async (formData) => {
-  const token = typeof document !== "undefined" 
-    ? document.cookie.split('token=')[1]?.split(';')[0] 
-    : null;
-  
+  const token =
+    typeof document !== "undefined"
+      ? document.cookie.split("token=")[1]?.split(";")[0]
+      : null;
+
   if (!token) {
     throw new Error("No authentication token found");
   }
@@ -62,10 +64,10 @@ export const updateProfile = async (formData) => {
     const response = await fetch(API_ENDPOINTS.USER_PROFILE.UPDATE, {
       method: "PUT",
       headers: {
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
         // Note: Don't set Content-Type for FormData, browser will set it with boundary
       },
-      body: formData
+      body: formData,
     });
 
     const data = await response.json();
@@ -77,13 +79,13 @@ export const updateProfile = async (formData) => {
     return {
       success: true,
       data: data.data || data,
-      message: data.message || "Profile updated successfully"
+      message: data.message || "Profile updated successfully",
     };
   } catch (error) {
     console.error("Error updating profile:", error);
     return {
       success: false,
-      message: error.message || "Failed to update profile"
+      message: error.message || "Failed to update profile",
     };
   }
 };
@@ -91,11 +93,16 @@ export const updateProfile = async (formData) => {
 /**
  * Change user password
  */
-export const changePassword = async (currentPassword, newPassword, confirmedPassword) => {
-  const token = typeof document !== "undefined" 
-    ? document.cookie.split('token=')[1]?.split(';')[0] 
-    : null;
-  
+export const changePassword = async (
+  currentPassword,
+  newPassword,
+  confirmedPassword,
+) => {
+  const token =
+    typeof document !== "undefined"
+      ? document.cookie.split("token=")[1]?.split(";")[0]
+      : null;
+
   if (!token) {
     throw new Error("No authentication token found");
   }
@@ -104,14 +111,14 @@ export const changePassword = async (currentPassword, newPassword, confirmedPass
     const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         old_password: currentPassword,
         new_password: newPassword,
-        confirm_password: confirmedPassword
-      })
+        confirm_password: confirmedPassword,
+      }),
     });
 
     const data = await response.json();
@@ -122,13 +129,13 @@ export const changePassword = async (currentPassword, newPassword, confirmedPass
 
     return {
       success: true,
-      message: data.message || "Password changed successfully"
+      message: data.message || "Password changed successfully",
     };
   } catch (error) {
     console.error("Error changing password:", error);
     return {
       success: false,
-      message: error.message || "Failed to change password"
+      message: error.message || "Failed to change password",
     };
   }
 };
@@ -136,7 +143,7 @@ export const changePassword = async (currentPassword, newPassword, confirmedPass
 export const userApiClient = {
   getProfile,
   updateProfile,
-  changePassword
+  changePassword,
 };
 
 export default userApiClient;

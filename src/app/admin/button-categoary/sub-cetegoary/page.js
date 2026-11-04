@@ -1,11 +1,11 @@
-import SubCategoryManagement from './_components'
+import SubCategoryManagement from "./_components";
 
 const page = () => {
   return (
     <div>
-       <SubCategoryManagement/>
+      <SubCategoryManagement />
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;

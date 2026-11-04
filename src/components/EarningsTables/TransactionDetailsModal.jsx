@@ -2,7 +2,11 @@
 
 import Image from "next/image";
 
-export default function TransactionDetailsModal({ isOpen, onClose, transaction }) {
+export default function TransactionDetailsModal({
+  isOpen,
+  onClose,
+  transaction,
+}) {
   if (!isOpen || !transaction) return null;
 
   return (
@@ -38,7 +42,9 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction }
             />
           </div>
           <div>
-            <p className="text-lg font-bold">Full name: {transaction.fullName}</p>
+            <p className="text-lg font-bold">
+              Full name: {transaction.fullName}
+            </p>
             <p className="text-sm">Email: {transaction.email}</p>
             <p className="text-sm">Phone number: {transaction.phone}</p>
           </div>
@@ -46,12 +52,32 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction }
 
         <h3 className="text-xl font-bold mb-4">Transaction Details:</h3>
         <div className="space-y-2">
-          <p>Transaction ID: <span className="font-semibold">{transaction.transactionID}</span></p>
-          <p>A/C holder name: <span className="font-semibold">{transaction.accHolderName}</span></p>
-          <p>A/C number: <span className="font-semibold">{transaction.accNumber}</span></p>
-          <p>Received amount: <span className="font-semibold">${transaction.receivedAmount}</span></p>
-          <p>Detect Percentage: <span className="font-semibold">${transaction.detectPercentage}</span></p>
-          <p>Final Amount: <span className="font-semibold">${transaction.finalAmount}</span></p>
+          <p>
+            Transaction ID:{" "}
+            <span className="font-semibold">{transaction.transactionID}</span>
+          </p>
+          <p>
+            A/C holder name:{" "}
+            <span className="font-semibold">{transaction.accHolderName}</span>
+          </p>
+          <p>
+            A/C number:{" "}
+            <span className="font-semibold">{transaction.accNumber}</span>
+          </p>
+          <p>
+            Received amount:{" "}
+            <span className="font-semibold">${transaction.receivedAmount}</span>
+          </p>
+          <p>
+            Detect Percentage:{" "}
+            <span className="font-semibold">
+              ${transaction.detectPercentage}
+            </span>
+          </p>
+          <p>
+            Final Amount:{" "}
+            <span className="font-semibold">${transaction.finalAmount}</span>
+          </p>
         </div>
       </div>
     </div>

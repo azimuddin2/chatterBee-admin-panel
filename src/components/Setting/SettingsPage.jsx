@@ -1,39 +1,59 @@
-'use client';
+"use client";
 
 import React, {
-  useState, useEffect, useRef, useMemo, useCallback,
-} from 'react';
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   ArrowLeftIcon,
-  PencilSquareIcon, CheckIcon, XMarkIcon,
-  ShieldCheckIcon, DocumentTextIcon, InformationCircleIcon,
-  QuestionMarkCircleIcon, EyeIcon, ArrowUturnLeftIcon,
-  CheckCircleIcon, ExclamationCircleIcon, ClockIcon,
-} from '@heroicons/react/24/outline';
-import dynamic from 'next/dynamic';
-import { fetchSettingByTab, saveSettingByTab } from '../lib/settingsApiClient';
-import FaqSection from './Faqsection';
+  PencilSquareIcon,
+  CheckIcon,
+  XMarkIcon,
+  ShieldCheckIcon,
+  DocumentTextIcon,
+  InformationCircleIcon,
+  QuestionMarkCircleIcon,
+  EyeIcon,
+  ArrowUturnLeftIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import { fetchSettingByTab, saveSettingByTab } from "../lib/settingsApiClient";
+import FaqSection from "./Faqsection";
 
 // ── Jodit (SSR-safe) ──────────────────────────────────────────────────────────
-const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
+const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 const TABS = [
   {
-    id: 'privacy-security', label: 'Privacy Policy', Icon: ShieldCheckIcon,
-    desc: 'Explain how user data is collected, used and protected.',
+    id: "privacy-security",
+    label: "Privacy Policy",
+    Icon: ShieldCheckIcon,
+    desc: "Explain how user data is collected, used and protected.",
   },
   {
-    id: 'terms-conditions', label: 'Terms & Conditions', Icon: DocumentTextIcon,
-    desc: 'Rules and conditions users agree to when using the app.',
+    id: "terms-conditions",
+    label: "Terms & Conditions",
+    Icon: DocumentTextIcon,
+    desc: "Rules and conditions users agree to when using the app.",
   },
   {
-    id: 'about-us', label: 'About Us', Icon: InformationCircleIcon,
-    desc: 'Tell users who you are and what the app is about.',
+    id: "about-us",
+    label: "About Us",
+    Icon: InformationCircleIcon,
+    desc: "Tell users who you are and what the app is about.",
   },
   {
-    id: 'faq', label: 'FAQ', Icon: QuestionMarkCircleIcon,
-    desc: 'Common questions and answers shown to users.',
+    id: "faq",
+    label: "FAQ",
+    Icon: QuestionMarkCircleIcon,
+    desc: "Common questions and answers shown to users.",
   },
 ];
 
@@ -41,7 +61,7 @@ const formatDate = (iso) => {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  return d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 };
 
 const PREVIEW_CSS = `
@@ -78,14 +98,18 @@ const Toast = ({ message, type, onClose }) => (
   <div
     role="status"
     className={`flex items-center justify-between gap-3 px-4 py-3 mb-4 rounded-lg text-sm font-medium border
-      ${type === 'success'
-        ? 'bg-green-50 text-green-700 border-green-200'
-        : 'bg-red-50 text-red-700 border-red-200'}`}
+      ${
+        type === "success"
+          ? "bg-green-50 text-green-700 border-green-200"
+          : "bg-red-50 text-red-700 border-red-200"
+      }`}
   >
     <span className="flex items-center gap-2">
-      {type === 'success'
-        ? <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
-        : <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0" />}
+      {type === "success" ? (
+        <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+      ) : (
+        <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0" />
+      )}
       {message}
     </span>
     <button
@@ -102,18 +126,18 @@ const Toast = ({ message, type, onClose }) => (
 // MAIN PAGE COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const SettingsPage = ({ onBackClick }) => {
-  const contentRef = useRef('');   
-  const savedRef = useRef('');    
+  const contentRef = useRef("");
+  const savedRef = useRef("");
   const touchedRef = useRef(false);
   const toastTimer = useRef(null);
-  const saveRef = useRef(null);  
+  const saveRef = useRef(null);
 
   // ── state ────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('privacy-security');
-  const [editableContent, setEditableContent] = useState('');
+  const [activeTab, setActiveTab] = useState("privacy-security");
+  const [editableContent, setEditableContent] = useState("");
 
   // editor UX
-  const [mode, setMode] = useState('edit');         
+  const [mode, setMode] = useState("edit");
   const [isDirty, setIsDirty] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -121,76 +145,100 @@ const SettingsPage = ({ onBackClick }) => {
   // UI flags
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(null); 
+  const [toast, setToast] = useState(null);
 
   const currentTab = TABS.find((t) => t.id === activeTab);
 
   // ── toast helper ─────────────────────────────────────────────────────────
-  const showToast = useCallback((message, type = 'success') => {
+  const showToast = useCallback((message, type = "success") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ message, type });
     toastTimer.current = setTimeout(() => setToast(null), 3500);
   }, []);
 
-  useEffect(() => () => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   // ── load content on tab change ───────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
-      setMode('edit');
+      setMode("edit");
       setIsDirty(false);
       touchedRef.current = false;
-      if (activeTab === 'faq') return; 
+      if (activeTab === "faq") return;
       setLoading(true);
-      contentRef.current = '';
-      setEditableContent('');
+      contentRef.current = "";
+      setEditableContent("");
       try {
         const data = await fetchSettingByTab(activeTab);
         if (!cancelled) {
-          contentRef.current = data?.content ?? '';
+          contentRef.current = data?.content ?? "";
           savedRef.current = contentRef.current;
           setEditableContent(contentRef.current);
           setLastUpdated(data?.updated_at ?? null);
         }
       } catch (err) {
-        if (!cancelled) showToast(err.message || 'Failed to load content.', 'error');
+        if (!cancelled)
+          showToast(err.message || "Failed to load content.", "error");
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab, showToast]);
 
   // ── Jodit config (memoised so editor doesn't re-mount) ───────────────────
-  const joditConfig = useMemo(() => ({
-    readonly: false,
-    spellcheck: false,
-    theme: 'light',
-    toolbarButtonSize: 'middle',
-    minHeight: 380,
-    placeholder: 'Start writing here…',
-    showXPathInStatusbar: false,
-    showCharsCounter: false,
-    showWordsCounter: true,
-    askBeforePasteHTML: false,
-    defaultActionOnPaste: 'insert_clear_html',
-    buttons: [
-      'undo', 'redo', '|',
-      'paragraph', '|',
-      'bold', 'italic', 'underline', 'strikethrough', '|',
-      'ul', 'ol', '|',
-      'align', '|',
-      'link', 'table', 'hr', '|',
-      'eraser', 'fullsize', '|',
-      'source',
-    ],
-  }), []);
+  const joditConfig = useMemo(
+    () => ({
+      readonly: false,
+      spellcheck: false,
+      theme: "light",
+      toolbarButtonSize: "middle",
+      minHeight: 380,
+      placeholder: "Start writing here…",
+      showXPathInStatusbar: false,
+      showCharsCounter: false,
+      showWordsCounter: true,
+      askBeforePasteHTML: false,
+      defaultActionOnPaste: "insert_clear_html",
+      buttons: [
+        "undo",
+        "redo",
+        "|",
+        "paragraph",
+        "|",
+        "bold",
+        "italic",
+        "underline",
+        "strikethrough",
+        "|",
+        "ul",
+        "ol",
+        "|",
+        "align",
+        "|",
+        "link",
+        "table",
+        "hr",
+        "|",
+        "eraser",
+        "fullsize",
+        "|",
+        "source",
+      ],
+    }),
+    [],
+  );
 
   // ── editor handlers ──────────────────────────────────────────────────────
   const handleEditorChange = (val) => {
@@ -208,13 +256,17 @@ const SettingsPage = ({ onBackClick }) => {
     setEditableContent(val);
   };
 
-  const markTouched = () => { touchedRef.current = true; };
+  const markTouched = () => {
+    touchedRef.current = true;
+  };
 
   // ── tab change (unsaved changes guard) ───────────────────────────────────
   const handleTabChange = (id) => {
     if (id === activeTab) return;
-    if (isDirty && activeTab !== 'faq') {
-      const ok = window.confirm('You have unsaved changes. Discard them and switch tab?');
+    if (isDirty && activeTab !== "faq") {
+      const ok = window.confirm(
+        "You have unsaved changes. Discard them and switch tab?",
+      );
       if (!ok) return;
     }
     setActiveTab(id);
@@ -229,7 +281,7 @@ const SettingsPage = ({ onBackClick }) => {
 
   // ── discard changes ──────────────────────────────────────────────────────
   const handleDiscard = () => {
-    if (!window.confirm('Discard all unsaved changes?')) return;
+    if (!window.confirm("Discard all unsaved changes?")) return;
     contentRef.current = savedRef.current;
     setEditableContent(savedRef.current);
     touchedRef.current = false;
@@ -252,9 +304,9 @@ const SettingsPage = ({ onBackClick }) => {
       setLastUpdated(fresh?.updated_at ?? new Date().toISOString());
       setIsDirty(false);
 
-      showToast('Saved successfully!', 'success');
+      showToast("Saved successfully!", "success");
     } catch (err) {
-      showToast(err.message || 'Failed to save.', 'error');
+      showToast(err.message || "Failed to save.", "error");
     } finally {
       setSaving(false);
     }
@@ -263,22 +315,25 @@ const SettingsPage = ({ onBackClick }) => {
 
   // ── Ctrl/Cmd + S to save ─────────────────────────────────────────────────
   useEffect(() => {
-    if (activeTab === 'faq') return undefined;
+    if (activeTab === "faq") return undefined;
     const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         saveRef.current?.();
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [activeTab]);
 
   useEffect(() => {
     if (!isDirty) return undefined;
-    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = ''; };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [isDirty]);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -317,12 +372,14 @@ const SettingsPage = ({ onBackClick }) => {
             <button
               key={id}
               onClick={() => handleTabChange(id)}
-              aria-current={active ? 'page' : undefined}
+              aria-current={active ? "page" : undefined}
               className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
                 border transition-all
-                ${active
-                  ? 'bg-[#FDD268] border-[#FDD268] text-black shadow-sm'
-                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black'}`}
+                ${
+                  active
+                    ? "bg-[#FDD268] border-[#FDD268] text-black shadow-sm"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black"
+                }`}
             >
               <Icon className="h-5 w-5" />
               {label}
@@ -333,11 +390,12 @@ const SettingsPage = ({ onBackClick }) => {
 
       {/* ── Tab panel ── */}
       <div className="bg-gray-50 p-4 sm:p-6 rounded-2xl min-h-[400px]">
-
         {/* ── Section heading ── */}
         <div className="flex items-start gap-3 mb-5">
           <div className="h-11 w-11 rounded-xl bg-[#FDD268]/30 flex items-center justify-center flex-shrink-0">
-            {currentTab && <currentTab.Icon className="h-6 w-6 text-gray-800" />}
+            {currentTab && (
+              <currentTab.Icon className="h-6 w-6 text-gray-800" />
+            )}
           </div>
           <div className="min-w-0">
             <h2 className="text-xl font-semibold">{currentTab?.label}</h2>
@@ -345,33 +403,29 @@ const SettingsPage = ({ onBackClick }) => {
           </div>
         </div>
 
-        {activeTab === 'faq' ? (
-
+        {activeTab === "faq" ? (
           /* ════════ FAQ TAB (alada component) ════════ */
           <FaqSection />
-
         ) : (
-
           /* ════════ RICH-TEXT TABS (Privacy / Terms / About) ════════ */
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-
             {/* ── Card top bar: Edit/Preview + last updated ── */}
             <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 bg-gray-50">
               <div className="inline-flex rounded-lg bg-gray-200/70 p-1">
                 <button
                   type="button"
-                  onClick={() => switchMode('edit')}
+                  onClick={() => switchMode("edit")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors
-                    ${mode === 'edit' ? 'bg-white shadow-sm text-black' : 'text-gray-600 hover:text-black'}`}
+                    ${mode === "edit" ? "bg-white shadow-sm text-black" : "text-gray-600 hover:text-black"}`}
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                   Edit
                 </button>
                 <button
                   type="button"
-                  onClick={() => switchMode('preview')}
+                  onClick={() => switchMode("preview")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors
-                    ${mode === 'preview' ? 'bg-white shadow-sm text-black' : 'text-gray-600 hover:text-black'}`}
+                    ${mode === "preview" ? "bg-white shadow-sm text-black" : "text-gray-600 hover:text-black"}`}
                 >
                   <EyeIcon className="h-4 w-4" />
                   Preview
@@ -389,7 +443,7 @@ const SettingsPage = ({ onBackClick }) => {
             {/* ── Card body ── */}
             {loading ? (
               <EditorSkeleton />
-            ) : mode === 'edit' ? (
+            ) : mode === "edit" ? (
               <div
                 onKeyDownCapture={markTouched}
                 onPointerDownCapture={markTouched}
@@ -418,7 +472,11 @@ const SettingsPage = ({ onBackClick }) => {
             {/* ── Card footer: status + actions ── */}
             <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
               {toast && (
-                <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+                <Toast
+                  message={toast.message}
+                  type={toast.type}
+                  onClose={() => setToast(null)}
+                />
               )}
 
               <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">

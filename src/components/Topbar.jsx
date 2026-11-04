@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { getProfile } from './lib/userProfileApiClient';
-
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getProfile } from "./lib/userProfileApiClient";
 
 export default function Topbar({ onBellClick }) {
   const router = useRouter();
-  const [profileImage, setProfileImage] = useState('/image/userImage.png');
+  const [profileImage, setProfileImage] = useState("/image/userImage.png");
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch profile data to get avatar
@@ -15,22 +14,23 @@ export default function Topbar({ onBellClick }) {
     const fetchProfileImage = async () => {
       try {
         const response = await getProfile();
-        
+
         console.log("Topbar Profile Response:", response); // Debug log
-        
+
         if (response.success && response.data) {
           // Extract avatar from multiple possible locations
-          const avatarUrl = response.data.avatar || response.data.profile?.avatar;
-          
+          const avatarUrl =
+            response.data.avatar || response.data.profile?.avatar;
+
           console.log("Topbar Avatar URL:", avatarUrl); // Debug log
-          
+
           // Set profile image if available, otherwise use default
           if (avatarUrl) {
             setProfileImage(avatarUrl);
           } else if (response.data.full_name) {
             // Generate avatar with user initials if no image
             setProfileImage(
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(response.data.full_name)}&background=FDD268&color=000&size=128&bold=true`
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(response.data.full_name)}&background=FDD268&color=000&size=128&bold=true`,
             );
           }
         }
@@ -52,15 +52,15 @@ export default function Topbar({ onBellClick }) {
       }
     };
 
-    window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener("profileUpdated", handleProfileUpdate);
 
     return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
   }, []);
 
   const handleUserImageClick = () => {
-    router.push('/admin/profile');
+    router.push("/admin/profile");
   };
 
   return (
@@ -91,8 +91,8 @@ export default function Topbar({ onBellClick }) {
         </div> */}
 
         {/* User Profile Image */}
-        <div 
-          className="relative rounded-full cursor-pointer hover:opacity-80 transition-opacity" 
+        <div
+          className="relative rounded-full cursor-pointer hover:opacity-80 transition-opacity"
           onClick={handleUserImageClick}
           title="Go to Profile"
         >
@@ -100,12 +100,12 @@ export default function Topbar({ onBellClick }) {
             <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
           ) : (
             <img
-              src={profileImage} 
-              alt="User Icon" 
+              src={profileImage}
+              alt="User Icon"
               className="w-10 h-10 rounded-full object-cover"
               onError={(e) => {
                 console.error("Topbar image load error, using fallback");
-                e.target.src = '/image/userImage.png';
+                e.target.src = "/image/userImage.png";
               }}
             />
           )}

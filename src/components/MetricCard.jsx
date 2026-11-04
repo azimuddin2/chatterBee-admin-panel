@@ -1,12 +1,21 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Users, AlertTriangle, DollarSign } from 'lucide-react';
-import { getAdminDashboardStats } from './lib/adminStatsApi';
+import React, { useState, useEffect } from "react";
+import { Users, AlertTriangle, DollarSign } from "lucide-react";
+import { getAdminDashboardStats } from "./lib/adminStatsApi";
 
-
-function MetricCard({ title, value, icon: Icon, iconBgColor = "bg-blue-50", iconColor = "text-blue-500", isLoading = false }) {
+function MetricCard({
+  title,
+  value,
+  icon: Icon,
+  iconBgColor = "bg-blue-50",
+  iconColor = "text-blue-500",
+  isLoading = false,
+}) {
   return (
-    <div style={{ boxShadow: '0px 4px 14.7px 0px rgba(0, 0, 0, 0.25)' }} className="bg-white rounded-lg p-6 py-10 px-16 shadow-sm ">
+    <div
+      style={{ boxShadow: "0px 4px 14.7px 0px rgba(0, 0, 0, 0.25)" }}
+      className="bg-white rounded-lg p-6 py-10 px-16 shadow-sm "
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm text-gray-600 mb-1">{title}</p>
@@ -14,7 +23,7 @@ function MetricCard({ title, value, icon: Icon, iconBgColor = "bg-blue-50", icon
             <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
           ) : (
             <p className="text-2xl font-bold text-gray-900">
-              {typeof value === 'number' ? value.toLocaleString() : value}
+              {typeof value === "number" ? value.toLocaleString() : value}
             </p>
           )}
         </div>
@@ -39,15 +48,15 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const response = await getAdminDashboardStats();
-      
+
       if (response.success && response.data) {
         setStats(response.data);
       } else {
-        setError('Failed to load dashboard statistics');
+        setError("Failed to load dashboard statistics");
       }
     } catch (err) {
-      console.error('Dashboard stats error:', err);
-      setError(err.message || 'An error occurred');
+      console.error("Dashboard stats error:", err);
+      setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -63,7 +72,7 @@ export default function Dashboard() {
           {error}
         </div>
       )}
-      
+
       <div className="mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <MetricCard
@@ -84,7 +93,11 @@ export default function Dashboard() {
           />
           <MetricCard
             title="Total Earning"
-            value={stats?.total_revenue ? `$${stats.total_revenue.toFixed(2)}` : '$0.00'}
+            value={
+              stats?.total_revenue
+                ? `$${stats.total_revenue.toFixed(2)}`
+                : "$0.00"
+            }
             icon={DollarSign}
             iconBgColor="bg-green-50"
             iconColor="text-green-500"
