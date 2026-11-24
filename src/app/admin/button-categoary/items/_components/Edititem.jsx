@@ -23,35 +23,47 @@ import {
   ImageUploadField,
 } from "../../sub-cetegoary/_components/shared/ui";
 
-// Ekta sub-category kon main category-r under e, seta identify korar key.
-const getCatKey = (sc) =>
-  sc?.main_category_id ?? sc?.main_category_name ?? null;
 const CATEGORY_PAGE_SIZE = 5000;
 
-const getAllPages = async (fetchPage) => {
-  const data = [];
-  let page = 1;
-  let totalPages = 1;
+// Module-level cache: form abar khulle notun kore fetch korbe na
+const cache = { categories: null, subCategories: null };
 
-  while (page <= totalPages) {
-    const result = await fetchPage(page);
+// Sub-category ta kon main category-r under e, tar id (field name alada hole-o kaj korbe)
+const getSubCatParentId = (sc) =>
+  sc?.main_category_id ??
+  sc?.mainCategoryId ??
+  sc?.category_id ??
+  sc?.main_category?.id ??
+  null;
+
+const getAllPages = async (fetchPage) => {
+  // 1st page age, tarpor baki page gulo ekshathe (parallel)
+  const first = await fetchPage(1);
+  if (!first.success)
+    throw new Error(first.message || "Could not load categories");
+
+  const totalPages = Math.max(
+    first.pagination?.totalPages || 1,
+    Math.ceil((first.pagination?.totalCount || 0) / CATEGORY_PAGE_SIZE),
+  );
+
+  if (totalPages <= 1) return first.data;
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => fetchPage(i + 2)),
+  );
+
+  const data = [...first.data];
+  for (const result of rest) {
     if (!result.success)
       throw new Error(result.message || "Could not load categories");
-
     data.push(...result.data);
-    totalPages = Math.max(
-      totalPages,
-      result.pagination?.totalPages || 0,
-      Math.ceil((result.pagination?.totalCount || 0) / CATEGORY_PAGE_SIZE),
-    );
-    page += 1;
   }
-
   return data;
 };
 
 const makeCatOption = (sc) => {
-  const key = getCatKey(sc);
+  const key = getSubCatParentId(sc) ?? sc?.main_category_name ?? null;
   if (key === null) return null;
   const name = sc.main_category_name || "Unknown";
   return { id: key, name, displayLabel: name };
@@ -98,6 +110,7 @@ export default function EditItem({ item, onDone, onCancel }) {
   // Category + Sub-category
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [catLoading, setCatLoading] = useState(false);
   const [subCatLoading, setSubCatLoading] = useState(false);
   const [selectedCat, setSelectedCat] = useState(null);
   const [selectedSub, setSelectedSub] = useState(null);
@@ -129,91 +142,125 @@ export default function EditItem({ item, onDone, onCancel }) {
     [],
   );
 
-  // Load all categories and sub-categories, then pre-select the item's current one.
+  // ── Load categories (alada, jate sub-category-r jonno wait korte na hoy) ──
   useEffect(() => {
     let cancelled = false;
-    setSubCatLoading(true);
-    Promise.all([
-      getAllPages((page) =>
-        getAllRootCategories({
-          lang: "en",
-          page,
-          page_size: CATEGORY_PAGE_SIZE,
-        }),
-      ),
-      getAllPages((page) =>
-        getAllSubCategories({
-          page,
-          page_size: CATEGORY_PAGE_SIZE,
-        }),
-      ),
-    ])
-      .then(([categoryData, subCategoryData]) => {
-        if (cancelled) return;
-        setCategories(categoryData);
-        setSubCategories(subCategoryData);
-        const currentId =
-          typeof item.category === "object" ? item.category?.id : item.category;
 
-        // 1) match by id (string-safe: 5 and "5" are treated as equal)
-        let current =
-          currentId != null && currentId !== ""
-            ? subCategoryData.find((sc) => String(sc.id) === String(currentId))
-            : undefined;
+    if (cache.categories) {
+      setCategories(cache.categories);
+      return;
+    }
 
-        // 2) fallback: match by name
-        if (!current && item.category_name) {
-          const target = String(item.category_name).trim().toLowerCase();
-          current = subCategoryData.find(
-            (sc) =>
-              String(sc.name ?? "")
-                .trim()
-                .toLowerCase() === target ||
-              formatSubCategory(sc, existingLang)
-                .formattedName?.trim()
-                .toLowerCase() === target,
-          );
-        }
-        // Keep a fallback when an item's sub-category no longer exists in the list.
-        if (!current && currentId != null && currentId !== "") {
-          console.warn(
-            "Sub-category",
-            currentId,
-            "not found in getAllSubCategories() result (",
-            subCategoryData.length,
-            "loaded )",
-          );
-          current = {
-            id: currentId,
-            name: item.category_name,
-            displayLabel: item.category_name || `Sub-category #${currentId}`,
-            _fallback: true,
-          };
-        }
-        // The input shows renderName(value) = value.displayLabel, so the
-        // preselected object must carry displayLabel just like dropdown options do.
-        if (current && !current.displayLabel) {
-          current = {
-            ...current,
-            displayLabel: formatSubCategory(current, existingLang)
-              .formattedName,
-          };
-        }
-        if (current) {
-          setSelectedSub(current);
-          const catOpt = makeCatOption(current);
-          if (catOpt) setSelectedCat(catOpt);
-        }
+    setCatLoading(true);
+    getAllPages((page) =>
+      getAllRootCategories({
+        lang: "en",
+        page,
+        page_size: CATEGORY_PAGE_SIZE,
+      }),
+    )
+      .then((data) => {
+        cache.categories = data;
+        if (!cancelled) setCategories(data);
       })
       .catch((error) => {
         if (!cancelled)
-          toast.error(
-            error.message || "Could not load categories and sub-categories",
-          );
+          toast.error(error.message || "Could not load categories");
+      })
+      .finally(() => {
+        if (!cancelled) setCatLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ── Load sub-categories, then pre-select the item's current one ──
+  useEffect(() => {
+    let cancelled = false;
+
+    const preselect = (subCategoryData) => {
+      const currentId =
+        typeof item.category === "object" ? item.category?.id : item.category;
+
+      // 1) match by id (string-safe: 5 and "5" are treated as equal)
+      let current =
+        currentId != null && currentId !== ""
+          ? subCategoryData.find((sc) => String(sc.id) === String(currentId))
+          : undefined;
+
+      // 2) fallback: match by name
+      if (!current && item.category_name) {
+        const target = String(item.category_name).trim().toLowerCase();
+        current = subCategoryData.find(
+          (sc) =>
+            String(sc.name ?? "")
+              .trim()
+              .toLowerCase() === target ||
+            formatSubCategory(sc, existingLang)
+              .formattedName?.trim()
+              .toLowerCase() === target,
+        );
+      }
+
+      // Keep a fallback when an item's sub-category no longer exists in the list.
+      if (!current && currentId != null && currentId !== "") {
+        console.warn(
+          "Sub-category",
+          currentId,
+          "not found in getAllSubCategories() result (",
+          subCategoryData.length,
+          "loaded )",
+        );
+        current = {
+          id: currentId,
+          name: item.category_name,
+          displayLabel: item.category_name || `Sub-category #${currentId}`,
+          _fallback: true,
+        };
+      }
+
+      // The input shows renderName(value) = value.displayLabel, so the
+      // preselected object must carry displayLabel just like dropdown options do.
+      if (current && !current.displayLabel) {
+        current = {
+          ...current,
+          displayLabel: formatSubCategory(current, existingLang).formattedName,
+        };
+      }
+
+      if (current) {
+        setSelectedSub(current);
+        const catOpt = makeCatOption(current);
+        if (catOpt) setSelectedCat(catOpt);
+      }
+    };
+
+    if (cache.subCategories) {
+      setSubCategories(cache.subCategories);
+      preselect(cache.subCategories);
+      return;
+    }
+
+    setSubCatLoading(true);
+    getAllPages((page) =>
+      getAllSubCategories({ page, page_size: CATEGORY_PAGE_SIZE }),
+    )
+      .then((data) => {
+        cache.subCategories = data;
+        if (cancelled) return;
+        setSubCategories(data);
+        preselect(data);
+      })
+      .catch((error) => {
+        if (!cancelled)
+          toast.error(error.message || "Could not load sub-categories");
       })
       .finally(() => {
         if (!cancelled) setSubCatLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
@@ -231,38 +278,25 @@ export default function EditItem({ item, onDone, onCancel }) {
     });
   }, [categories, lang]);
 
-  // ── Sub-category options (category select thakle sudhu oi category-r gulo) ──
+  // ── Sub-category options (sob sub-category dekhabe, category select korle-o filter hobe na) ──
   const subCatOptions = useMemo(() => {
-    const list = selectedCat
-      ? subCategories.filter(
-          (sc) => String(getCatKey(sc)) === String(selectedCat.id),
-        )
-      : subCategories;
-
-    const options = list.map((sc) => {
+    const options = subCategories.map((sc) => {
       const f = formatSubCategory(sc, lang);
-      const displayLabel = selectedCat
-        ? f.formattedName
-        : `${sc.main_category_name || "Unknown"} → ${f.formattedName}`;
+      const displayLabel = `${sc.main_category_name || "Unknown"} → ${f.formattedName}`;
       return { ...sc, displayLabel };
     });
 
     // Keep the fallback option in the list so it can be shown/selected.
     return selectedSub?._fallback ? [selectedSub, ...options] : options;
-  }, [subCategories, selectedCat, selectedSub, lang]);
+  }, [subCategories, selectedSub, lang]);
 
   // ── Handlers ──
   const handleCategorySelect = (cat) => {
     setSelectedCat(cat);
-    // Notun category-r sathe na mille age-r sub-category clear
-    if (selectedSub && String(getCatKey(selectedSub)) !== String(cat.id)) {
-      setSelectedSub(null);
-    }
   };
 
   const handleCategoryClear = () => {
     setSelectedCat(null);
-    setSelectedSub(null);
   };
 
   const handleSubSelect = (sc) => {
@@ -355,7 +389,7 @@ export default function EditItem({ item, onDone, onCancel }) {
             options={categoryOptions}
             onSelect={handleCategorySelect}
             placeholder="Select a category..."
-            loading={subCatLoading}
+            loading={catLoading}
             renderName={(c) => c.displayLabel}
           />
         </div>

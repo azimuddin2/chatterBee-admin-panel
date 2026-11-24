@@ -20,29 +20,69 @@ import {
   getAllSubCategories,
 } from "@/components/lib/subCategoriesApiClient";
 
-// Ekta sub-category kon main category-r under e, seta identify korar key.
-const getCatKey = (sc) => sc.main_category_id ?? sc.main_category_name ?? null;
 const CATEGORY_PAGE_SIZE = 5000;
 
-const getAllPages = async (fetchPage) => {
-  const data = [];
-  let page = 1;
-  let totalPages = 1;
+// ── Matching helpers ─────────────────────────────────────────────
+const norm = (v) =>
+  v === null || v === undefined ? "" : String(v).trim().toLowerCase();
 
-  while (page <= totalPages) {
-    const result = await fetchPage(page);
-    if (!result.success)
-      throw new Error(result.message || "Could not load categories");
+// Root category-r id (API-r field name alada hole-o kaj korbe)
+const getCatId = (c) => c?.id ?? c?._id ?? c?.main_category_id ?? c?.category_id ?? null;
 
-    data.push(...result.data);
-    totalPages = Math.max(
-      totalPages,
-      result.pagination?.totalPages || 0,
-      Math.ceil((result.pagination?.totalCount || 0) / CATEGORY_PAGE_SIZE),
-    );
-    page += 1;
+// Sub-category ta kon main category-r under e, tar id
+const getSubCatParentId = (sc) =>
+  sc?.main_category_id ??
+  sc?.mainCategoryId ??
+  sc?.category_id ??
+  sc?.main_category?.id ??
+  null;
+
+// Sub-category ta ei category-r kina (id diye, na pele name diye)
+const matchesCategory = (sc, cat) => {
+  if (!sc || !cat) return false;
+
+  const parentId = getSubCatParentId(sc);
+  const catId = getCatId(cat);
+  if (parentId !== null && catId !== null) {
+    return String(parentId) === String(catId);
   }
 
+  // Fallback: name diye match (raw name + translated name duto-i check)
+  const subCatName = norm(sc.main_category_name);
+  if (!subCatName) return false;
+  return (
+    subCatName === norm(cat.rawName) ||
+    subCatName === norm(cat.name) ||
+    subCatName === norm(cat.displayLabel)
+  );
+};
+
+// Module-level cache: form abar khulle notun kore fetch korbe na
+const cache = { categories: null, subCategories: null };
+
+const getAllPages = async (fetchPage) => {
+  // 1st page age, tarpor baki page gulo ekshathe (parallel)
+  const first = await fetchPage(1);
+  if (!first.success)
+    throw new Error(first.message || "Could not load categories");
+
+  const totalPages = Math.max(
+    first.pagination?.totalPages || 1,
+    Math.ceil((first.pagination?.totalCount || 0) / CATEGORY_PAGE_SIZE),
+  );
+
+  if (totalPages <= 1) return first.data;
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => fetchPage(i + 2)),
+  );
+
+  const data = [...first.data];
+  for (const result of rest) {
+    if (!result.success)
+      throw new Error(result.message || "Could not load categories");
+    data.push(...result.data);
+  }
   return data;
 };
 
@@ -61,6 +101,7 @@ function ClearButton({ onClick }) {
 export default function AddItem({ onDone, onCancel }) {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [catLoading, setCatLoading] = useState(false);
   const [subCatLoading, setSubCatLoading] = useState(false);
   const [selectedCat, setSelectedCat] = useState(null);
   const [selectedSub, setSelectedSub] = useState(null);
@@ -91,36 +132,51 @@ export default function AddItem({ onDone, onCancel }) {
 
   useEffect(() => {
     let cancelled = false;
-    setSubCatLoading(true);
-    Promise.all([
+
+    // Dutoi alada alada load hobe, ja age ashe seta age dekhabe
+    if (cache.categories) {
+      setCategories(cache.categories);
+    } else {
+      setCatLoading(true);
       getAllPages((page) =>
         getAllRootCategories({
           lang: "en",
           page,
           page_size: CATEGORY_PAGE_SIZE,
         }),
-      ),
+      )
+        .then((data) => {
+          cache.categories = data;
+          if (!cancelled) setCategories(data);
+        })
+        .catch((error) => {
+          if (!cancelled) toast.error(error.message || "Could not load categories");
+        })
+        .finally(() => {
+          if (!cancelled) setCatLoading(false);
+        });
+    }
+
+    if (cache.subCategories) {
+      setSubCategories(cache.subCategories);
+    } else {
+      setSubCatLoading(true);
       getAllPages((page) =>
-        getAllSubCategories({
-          page,
-          page_size: CATEGORY_PAGE_SIZE,
-        }),
-      ),
-    ])
-      .then(([categoryData, subCategoryData]) => {
-        if (cancelled) return;
-        setCategories(categoryData);
-        setSubCategories(subCategoryData);
-      })
-      .catch((error) => {
-        if (!cancelled)
-          toast.error(
-            error.message || "Could not load categories and sub-categories",
-          );
-      })
-      .finally(() => {
-        if (!cancelled) setSubCatLoading(false);
-      });
+        getAllSubCategories({ page, page_size: CATEGORY_PAGE_SIZE }),
+      )
+        .then((data) => {
+          cache.subCategories = data;
+          if (!cancelled) setSubCategories(data);
+        })
+        .catch((error) => {
+          if (!cancelled)
+            toast.error(error.message || "Could not load sub-categories");
+        })
+        .finally(() => {
+          if (!cancelled) setSubCatLoading(false);
+        });
+    }
+
     return () => {
       cancelled = true;
     };
@@ -133,58 +189,53 @@ export default function AddItem({ onDone, onCancel }) {
   // ── Category options ──
   const categoryOptions = useMemo(() => {
     return categories.map((category) => {
+      const rawName = category.name || category.main_category_name || "";
       const name =
         getTranslatedName(category.translations, lang) ||
-        category.name ||
-        category.main_category_name ||
+        rawName ||
         "Unknown";
-      return { ...category, name, displayLabel: name };
+      return {
+        ...category,
+        id: getCatId(category), // id always normalized
+        rawName, // original (non-translated) name, name-fallback match-er jonno
+        name,
+        displayLabel: name,
+      };
     });
   }, [categories, lang]);
 
   // ── Sub-category options (category select thakle sudhu oi category-r gulo) ──
   const subCatOptions = useMemo(() => {
-    const list = selectedCat
-      ? subCategories.filter(
-          (sc) => String(getCatKey(sc)) === String(selectedCat.id),
-        )
-      : subCategories;
-
-    return list.map((sc) => {
+    // Sob sub-category dekhabe (category select korle-o filter hobe na)
+    return subCategories.map((sc) => {
       const formatted = formatSubCategory(sc, lang);
-      const displayLabel = selectedCat
-        ? formatted.formattedName
-        : `${sc.main_category_name || "Unknown"} → ${formatted.formattedName}`;
+      const displayLabel = `${sc.main_category_name || "Unknown"} → ${formatted.formattedName}`;
       return { ...sc, displayLabel };
     });
-  }, [subCategories, selectedCat, lang]);
+  }, [subCategories, lang]);
 
   // ── Handlers ──
   const handleCategorySelect = (cat) => {
     setSelectedCat(cat);
-    // Notun category-r sathe na mille age-r sub-category clear
-    if (selectedSub && String(getCatKey(selectedSub)) !== String(cat.id)) {
-      setSelectedSub(null);
-      setBuddyMode(false);
-    }
   };
 
   const handleCategoryClear = () => {
     setSelectedCat(null);
-    setSelectedSub(null);
-    setBuddyMode(false);
   };
 
   const handleSubSelect = (sc) => {
     setSelectedSub(sc);
     // Category select kora na thakle sub-category theke auto-set
     if (!selectedCat) {
-      const key = getCatKey(sc);
-      if (key !== null) {
+      const match = categoryOptions.find((c) => matchesCategory(sc, c));
+      if (match) {
+        setSelectedCat(match);
+      } else if (sc.main_category_name) {
         setSelectedCat({
-          id: key,
-          name: sc.main_category_name || "Unknown",
-          displayLabel: sc.main_category_name || "Unknown",
+          id: getSubCatParentId(sc),
+          rawName: sc.main_category_name,
+          name: sc.main_category_name,
+          displayLabel: sc.main_category_name,
         });
       }
     }
@@ -267,7 +318,7 @@ export default function AddItem({ onDone, onCancel }) {
             options={categoryOptions}
             onSelect={handleCategorySelect}
             placeholder="Select a category..."
-            loading={subCatLoading}
+            loading={catLoading}
             renderName={(c) => c.displayLabel}
           />
         </div>
