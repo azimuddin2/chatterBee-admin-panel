@@ -36,6 +36,12 @@ const getSubCatParentId = (sc) =>
   sc?.main_category?.id ??
   null;
 
+// Sub-category ta ei category-r kina (id thakle id diye, na thakle name diye)
+const matchCat = (sc, cat) =>
+  getSubCatParentId(sc) != null
+    ? String(getSubCatParentId(sc)) === String(cat.id)
+    : sc.main_category_name === (cat.rawName ?? cat.name);
+
 const getAllPages = async (fetchPage) => {
   // 1st page age, tarpor baki page gulo ekshathe (parallel)
   const first = await fetchPage(1);
@@ -274,29 +280,44 @@ export default function EditItem({ item, onDone, onCancel }) {
         category.name ||
         category.main_category_name ||
         "Unknown";
-      return { ...category, name, displayLabel: name };
+      // rawName = translate na kora original name (name diye match korar jonno)
+      return {
+        ...category,
+        name,
+        rawName: category.name || category.main_category_name,
+        displayLabel: name,
+      };
     });
   }, [categories, lang]);
 
-  // ── Sub-category options (sob sub-category dekhabe, category select korle-o filter hobe na) ──
+  // ── Sub-category options (category select thakle sudhu oi category-r gulo) ──
   const subCatOptions = useMemo(() => {
-    const options = subCategories.map((sc) => {
+    const list = selectedCat
+      ? subCategories.filter((sc) => matchCat(sc, selectedCat))
+      : subCategories;
+
+    const options = list.map((sc) => {
       const f = formatSubCategory(sc, lang);
-      const displayLabel = `${sc.main_category_name || "Unknown"} → ${f.formattedName}`;
+      const displayLabel = selectedCat
+        ? f.formattedName
+        : `${sc.main_category_name || "Unknown"} → ${f.formattedName}`;
       return { ...sc, displayLabel };
     });
 
     // Keep the fallback option in the list so it can be shown/selected.
     return selectedSub?._fallback ? [selectedSub, ...options] : options;
-  }, [subCategories, selectedSub, lang]);
+  }, [subCategories, selectedCat, selectedSub, lang]);
 
   // ── Handlers ──
   const handleCategorySelect = (cat) => {
     setSelectedCat(cat);
+    // Notun category-r sathe na mille age-r sub-category clear
+    if (selectedSub && !matchCat(selectedSub, cat)) setSelectedSub(null);
   };
 
   const handleCategoryClear = () => {
     setSelectedCat(null);
+    setSelectedSub(null);
   };
 
   const handleSubSelect = (sc) => {
@@ -380,32 +401,70 @@ export default function EditItem({ item, onDone, onCancel }) {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Category */}
-        <div className="relative">
-          {selectedCat && <ClearButton onClick={handleCategoryClear} />}
-          <SmartDropdown
-            label="Category (optional)"
-            value={selectedCat}
-            options={categoryOptions}
-            onSelect={handleCategorySelect}
-            placeholder="Select a category..."
-            loading={catLoading}
-            renderName={(c) => c.displayLabel}
-          />
-        </div>
+        {/* Category → Sub-category */}
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">
+            Choose a category to narrow down the sub-categories, or search
+            sub-categories directly.
+          </p>
 
-        {/* Sub-Category */}
-        <div className="relative">
-          {selectedSub && <ClearButton onClick={handleSubClear} />}
-          <SmartDropdown
-            label="Sub-Category (optional)"
-            value={selectedSub}
-            options={subCatOptions}
-            onSelect={handleSubSelect}
-            placeholder="Select a sub-category..."
-            loading={subCatLoading}
-            renderName={(sc) => sc.displayLabel}
-          />
+          <div className="relative">
+            {selectedCat && <ClearButton onClick={handleCategoryClear} />}
+            <SmartDropdown
+              label="Category (optional)"
+              value={selectedCat}
+              options={categoryOptions}
+              onSelect={handleCategorySelect}
+              placeholder="Select a category..."
+              loading={catLoading}
+              renderName={(c) => c.displayLabel}
+            />
+          </div>
+
+          <div className="relative">
+            {selectedSub && <ClearButton onClick={handleSubClear} />}
+            <SmartDropdown
+              label="Sub-Category (optional)"
+              value={selectedSub}
+              options={subCatOptions}
+              onSelect={handleSubSelect}
+              placeholder={
+                selectedCat
+                  ? `Select a sub-category in ${selectedCat.displayLabel}...`
+                  : "Select a sub-category..."
+              }
+              loading={subCatLoading}
+              renderName={(sc) => sc.displayLabel}
+            />
+            {selectedCat && !subCatLoading && subCatOptions.length === 0 && (
+              <p className="mt-1 text-xs text-gray-400">
+                No sub-categories in this category. You can leave this empty.
+              </p>
+            )}
+          </div>
+
+          {/* Item kothay save hobe, seta dekhay */}
+          {selectedSub ? (
+            <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+              <span>✓</span>
+              <span>
+                Will be saved in{" "}
+                <strong>
+                  {selectedSub.main_category_name
+                    ? `${selectedSub.main_category_name} → `
+                    : ""}
+                  {selectedSub._fallback
+                    ? selectedSub.displayLabel
+                    : formatSubCategory(selectedSub, lang).formattedName}
+                </strong>
+              </span>
+            </div>
+          ) : selectedCat ? (
+            <div className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+              Pick a sub-category to attach this item, otherwise it will be
+              created without one.
+            </div>
+          ) : null}
         </div>
 
         {parentBuddyMode && (
