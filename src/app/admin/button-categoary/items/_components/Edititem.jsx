@@ -187,18 +187,26 @@ export default function EditItem({ item, onDone, onCancel }) {
     let cancelled = false;
 
     const preselect = (subCategoryData) => {
-      const currentId =
-        typeof item.category === "object" ? item.category?.id : item.category;
+      // Backend item e alada field ache: main_category / sub_category.
+      // Purono shape (shudhu `category`) hole seta sub-category id dhorbo.
+      const hasNewShape = "main_category" in item || "sub_category" in item;
+      const subId = hasNewShape
+        ? item.sub_category
+        : typeof item.category === "object"
+          ? item.category?.id
+          : item.category;
+      const subName = hasNewShape ? item.sub_category_name : item.category_name;
+      const mainId = hasNewShape ? item.main_category : null;
 
-      // 1) match by id (string-safe: 5 and "5" are treated as equal)
+      // 1) Sub-category: id diye khuji
       let current =
-        currentId != null && currentId !== ""
-          ? subCategoryData.find((sc) => String(sc.id) === String(currentId))
+        subId != null && subId !== ""
+          ? subCategoryData.find((sc) => String(sc.id) === String(subId))
           : undefined;
 
-      // 2) fallback: match by name
-      if (!current && item.category_name) {
-        const target = String(item.category_name).trim().toLowerCase();
+      // 2) fallback: name diye
+      if (!current && subName) {
+        const target = String(subName).trim().toLowerCase();
         current = subCategoryData.find(
           (sc) =>
             String(sc.name ?? "")
@@ -210,25 +218,16 @@ export default function EditItem({ item, onDone, onCancel }) {
         );
       }
 
-      // Keep a fallback when an item's sub-category no longer exists in the list.
-      if (!current && currentId != null && currentId !== "") {
-        console.warn(
-          "Sub-category",
-          currentId,
-          "not found in getAllSubCategories() result (",
-          subCategoryData.length,
-          "loaded )",
-        );
+      // Sub-category list e na thakle fallback
+      if (!current && subId != null && subId !== "") {
         current = {
-          id: currentId,
-          name: item.category_name,
-          displayLabel: item.category_name || `Sub-category #${currentId}`,
+          id: subId,
+          name: subName,
+          displayLabel: subName || `Sub-category #${subId}`,
           _fallback: true,
         };
       }
 
-      // The input shows renderName(value) = value.displayLabel, so the
-      // preselected object must carry displayLabel just like dropdown options do.
       if (current && !current.displayLabel) {
         current = {
           ...current,
@@ -236,8 +235,18 @@ export default function EditItem({ item, onDone, onCancel }) {
         };
       }
 
-      if (current) {
-        setSelectedSub(current);
+      if (current) setSelectedSub(current);
+
+      // Main category: item er nijer main_category theke (sub-category na thakleo)
+      if (mainId != null && mainId !== "") {
+        const mainName = item.main_category_name || "Unknown";
+        setSelectedCat({
+          id: mainId,
+          name: mainName,
+          rawName: mainName,
+          displayLabel: mainName,
+        });
+      } else if (current) {
         const catOpt = makeCatOption(current);
         if (catOpt) setSelectedCat(catOpt);
       }
@@ -270,7 +279,13 @@ export default function EditItem({ item, onDone, onCancel }) {
     return () => {
       cancelled = true;
     };
-  }, [item.category, item.category_name, existingLang]);
+  }, [
+    item.category,
+    item.category_name,
+    item.main_category,
+    item.sub_category,
+    existingLang,
+  ]);
 
   // ── Category options ──
   const categoryOptions = useMemo(() => {
@@ -364,7 +379,6 @@ export default function EditItem({ item, onDone, onCancel }) {
       toast.error("Item word is required");
       return;
     }
-
     setSubmitting(true);
     toast.loading("Updating item...", { id: "update-item" });
     const res = await updateItem(
@@ -378,6 +392,7 @@ export default function EditItem({ item, onDone, onCancel }) {
       lang,
       effectiveBuddyMode,
       selectedSub?.id ?? null, // sub-category na thakle null
+      selectedCat?.id ?? null, // main category (sub-category chhara-o jabe)
     );
     if (!res.success) {
       toast.error(res.message, { id: "update-item" });
@@ -461,8 +476,8 @@ export default function EditItem({ item, onDone, onCancel }) {
             </div>
           ) : selectedCat ? (
             <div className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-              Pick a sub-category to attach this item, otherwise it will be
-              created without one.
+              This item will be saved under the category only. You can also pick
+              a sub-category below.
             </div>
           ) : null}
         </div>

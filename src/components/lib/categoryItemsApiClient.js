@@ -294,8 +294,21 @@ export const createItem = async (
   }
 };
 
-// Replace the existing `updateItem` in categoryItemsApiClient.js with this.
-// Changes: new last parameter `categoryId`, sent to the backend as "category".
+// categoryItemsApiClient.js e purono `updateItem` er jaygay eta boshan.
+// getToken, API_ENDPOINTS, parseResponseSafely agei file e ache, tai import lagbe na.
+
+// TEST: backend kon nam e category nei seta jani na, tai sob nam e pathacchi.
+// Kaj korar por Network tab e dekhe ekta nam rekhe baki gulo muche din.
+const CATEGORY_FIELD_NAMES = [
+  "category",
+  "category_id",
+  "sub_category",
+  "sub_category_id",
+];
+
+
+
+// categoryItemsApiClient.js e purono `updateItem` er jaygay eta boshan.
 
 export const updateItem = async (
   itemId,
@@ -307,86 +320,141 @@ export const updateItem = async (
   isActive = true,
   lang = "en",
   buddyMode = false,
-  categoryId = null,
+  categoryId = null, // Sub-category ID (optional)
+  mainCategoryId = null, // Main category ID
 ) => {
   const token = getToken();
-  if (!token)
+
+  if (!token) {
     return {
       success: false,
       data: null,
       message: "No authentication token found",
       isAuthError: true,
     };
-  if (!itemId)
-    return { success: false, data: null, message: "Item ID is required" };
-  if (!word || !word.trim())
+  }
+
+  if (!itemId) {
     return {
       success: false,
       data: null,
-      message: "Item/Button word is required",
+      message: "Item ID is required",
     };
+  }
+
+  if (!word?.trim()) {
+    return {
+      success: false,
+      data: null,
+      message: "Item word is required",
+    };
+  }
 
   try {
     const formData = new FormData();
+
+    // Basic fields
     formData.append("word", word.trim());
     formData.append("color", color);
-    formData.append("is_active", isActive);
+    formData.append("is_active", String(isActive));
     formData.append("lang", lang);
-    formData.append("buddy_mode", buddyMode);
-    if (speakAs && speakAs.trim()) formData.append("speak_as", speakAs.trim());
+    formData.append("buddy_mode", String(buddyMode));
 
-    // NEW: send the (possibly changed) sub-category.
-    // Use the SAME field name createItem uses for the category.
-    if (categoryId !== null && categoryId !== undefined && categoryId !== "") {
-      formData.append("category", categoryId);
+    if (speakAs?.trim()) {
+      formData.append("speak_as", speakAs.trim());
     }
 
+    // ── Category ──
+    // Backend e `category` hocche item er sobcheye gobhir parent:
+    //   sub-category thakle seta, na thakle main category.
+    const hasSub = categoryId !== null && categoryId !== undefined;
+    // Main category shudhu number hole pathabo (naam hole backend bujhbe na)
+    const hasMain =
+      mainCategoryId !== null &&
+      mainCategoryId !== undefined &&
+      /^\d+$/.test(String(mainCategoryId));
+
+    if (hasSub) {
+      // Sub-category select kora: category = sub-category
+      formData.append("category", String(categoryId));
+    } else if (hasMain) {
+      // Sub-category nai: category = main category.
+      // Eta na pathale item e age theke thaka purono sub-category theke jay.
+      formData.append("category", String(mainCategoryId));
+      formData.append("main_category_id", String(mainCategoryId));
+    }
+
+    // Image validation
     if (imageFile) {
-      if (imageFile.size > 5 * 1024 * 1024)
+      if (imageFile.size > 5 * 1024 * 1024) {
         return {
           success: false,
           data: null,
           message: "Image file size must be less than 5MB",
         };
+      }
+
       formData.append("image_icon", imageFile);
     }
+
+    // Audio validation
     if (audioFile) {
-      if (audioFile.size > 10 * 1024 * 1024)
+      if (audioFile.size > 10 * 1024 * 1024) {
         return {
           success: false,
           data: null,
           message: "Audio file size must be less than 10MB",
         };
+      }
+
       formData.append("speak", audioFile);
+    }
+
+    // Debug payload (kaj shesh hole muche din)
+    console.log("UPDATE ITEM PAYLOAD:");
+
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
     }
 
     const response = await fetch(API_ENDPOINTS.CATEGORY_ITEMS.UPDATE(itemId), {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: formData,
     });
+
     const data = await parseResponseSafely(response);
-    if (!response.ok)
+
+    console.log("UPDATE ITEM RESPONSE:", data);
+
+    if (!response.ok) {
       return {
         success: false,
         data: null,
-        message: data.message || `Failed to update item (${response.status})`,
+        message: data?.message || `Failed to update item (${response.status})`,
         statusCode: response.status,
       };
+    }
+
     return {
       success: true,
-      data: data.data || null,
-      message: data.message || "Item updated successfully",
+      data: data?.data ?? data,
+      message: data?.message || "Item updated successfully",
     };
   } catch (error) {
+    console.error("UPDATE ITEM ERROR:", error);
+
     return {
       success: false,
       data: null,
-      message: `Network error: ${error.message}`,
+      message: error.message || "Network error",
       isNetworkError: true,
     };
   }
 };
+
 
 export const deleteItem = async (itemId) => {
   const token = getToken();
